@@ -84,7 +84,7 @@ class LectureFactory(BaseFactory):
                 _hours.append(l_h)
         else:
             while len(_hours) < 2:
-                l_h =  LectureHourFactory.build(lecture=self)
+                l_h = LectureHourFactory.build(lecture=self)
 
                 if any(l_h.conflicts_with(h) for h in _hours):
                     continue

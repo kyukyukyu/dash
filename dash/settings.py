@@ -3,6 +3,7 @@ import os
 
 os_env = os.environ
 
+
 class Config(object):
     SECRET_KEY = os_env['DASH_SECRET']  # TODO: Change me
     APP_DIR = os.path.abspath(os.path.dirname(__file__))  # This directory
@@ -15,14 +16,17 @@ class Config(object):
 
 
 class ProdConfig(Config):
+
     """Production configuration."""
     ENV = 'prod'
     DEBUG = False
-    SQLALCHEMY_DATABASE_URI = 'postgresql://localhost/example'  # TODO: Change me
+    # TODO: Change me
+    SQLALCHEMY_DATABASE_URI = 'postgresql://localhost/example'
     DEBUG_TB_ENABLED = False  # Disable Debug toolbar
 
 
 class DevConfig(Config):
+
     """Development configuration."""
     ENV = 'dev'
     DEBUG = True

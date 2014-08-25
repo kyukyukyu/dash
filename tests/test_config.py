@@ -2,6 +2,7 @@
 from dash.app import create_app
 from dash.settings import ProdConfig, DevConfig
 
+
 def test_production_config():
     app = create_app(ProdConfig)
     assert app.config['ENV'] == 'prod'

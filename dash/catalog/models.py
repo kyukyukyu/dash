@@ -12,6 +12,7 @@ from dash.database import (
 
 
 class CodeMixin(object):
+
     """A mixin that adds a column named ``code`` which identifies the objects
     of specific class in the source database.
     """
@@ -20,6 +21,7 @@ class CodeMixin(object):
 
 
 class CreatedAtMixin(object):
+
     """A mixin that adds a column named ``created_at`` which represents when
     the object was created in the application database.
     """
@@ -27,10 +29,11 @@ class CreatedAtMixin(object):
     created_at = Column(db.DateTime,
                         nullable=False,
                         default=dt.datetime.utcnow
-    )
+                        )
 
 
 class CatalogEntity(SurrogatePK, Model, CreatedAtMixin):
+
     """An abstract class for catalog entities. The objects of subclasses of
     this class have column named ``code`` which identifies the objects in the
     source database, column named ``name`` which represents the name of each
@@ -72,22 +75,22 @@ class Lecture(CatalogEntity):
         db.CheckConstraint('credit >= 0.0', name='ck_lectures_credit'),
         db.CheckConstraint('target_grade IS NULL OR target_grade >= 0',
                            name='ck_lectures_target_grade',
-        ),
+                           ),
     )
     instructor = Column(db.String(80), nullable=True)
     credit = Column(db.Float, nullable=False)
     target_grade = Column(db.Integer, nullable=True)
     course_id = ReferenceCol('courses')
     course = relationship('Course',
-        backref=db.backref('lectures', lazy='dynamic'),
-    )
+                          backref=db.backref('lectures', lazy='dynamic'),
+                          )
     department_id = ReferenceCol('departments', nullable=True)
     department = relationship('Department', backref='lectures')
     campus = relationship('Campus',
-        uselist=False,
-        secondary=Department.__table__,
-        backref=db.backref('lectures', lazy='dynamic'),
-    )
+                          uselist=False,
+                          secondary=Department.__table__,
+                          backref=db.backref('lectures', lazy='dynamic'),
+                          )
 
     def __repr__(self):
         return '<Department({name})>'.format(name=self.name)
@@ -106,11 +109,13 @@ class LectureHour(SurrogatePK, Model, CreatedAtMixin):
     start_time = Column(db.Integer, nullable=False)
     end_time = Column(db.Integer, nullable=False)
     lecture_id = ReferenceCol('lectures')
-    lecture = relationship('Lecture',
-        backref=db.backref('hours',
+    lecture = relationship(
+        'Lecture',
+        backref=db.backref(
+            'hours',
             order_by='LectureHour.day_of_week, LectureHour.start_time',
         ),
-    )
+        )
 
     def conflicts_with(self, h):
         if not isinstance(h, LectureHour):
@@ -128,4 +133,4 @@ class LectureHour(SurrogatePK, Model, CreatedAtMixin):
             .format(day_of_week=self.day_of_week,
                     start_time=self.start_time,
                     end_time=self.end_time,
-            )
+                    )
