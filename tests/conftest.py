@@ -9,7 +9,7 @@ from dash.settings import TestConfig
 from dash.app import create_app
 from dash.database import db as _db
 
-from .factories import UserFactory
+from .factories import UserFactory, CampusFactory, DepartmentFactory
 
 
 @pytest.yield_fixture(scope='function')
@@ -45,3 +45,21 @@ def user(db):
     user = UserFactory(password='myprecious')
     db.session.commit()
     return user
+
+
+@pytest.fixture
+def campuses(db):
+    campuses = [CampusFactory(), CampusFactory(), CampusFactory()]
+    db.session.commit()
+    return campuses
+
+
+@pytest.fixture
+def departments(db):
+    departments = [
+        DepartmentFactory(),
+        DepartmentFactory(),
+        DepartmentFactory(),
+    ]
+    db.session.commit()
+    return departments
