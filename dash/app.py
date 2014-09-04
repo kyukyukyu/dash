@@ -10,7 +10,6 @@ from dash.extensions import (
     db,
     login_manager,
     migrate,
-    debug_toolbar,
     api_manager,
 )
 from dash import public, user, catalog
@@ -36,9 +35,15 @@ def register_extensions(app):
     cache.init_app(app)
     db.init_app(app)
     login_manager.init_app(app)
-    debug_toolbar.init_app(app)
     migrate.init_app(app, db)
     api_manager.init_app(app, flask_sqlalchemy_db=db)
+
+    if app.config.get('ENV') == 'dev':
+        from dash.extensions_dev import (
+            debug_toolbar,
+        )
+        debug_toolbar.init_app(app)
+
     return None
 
 
