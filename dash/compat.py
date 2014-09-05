@@ -18,3 +18,13 @@ else:
     string_types = (str,)
     unicode = str
     basestring = (str, bytes)
+
+
+# Code from http://lucumr.pocoo.org/2011/1/22/forwards-compatible-python/
+class UnicodeMixin(object):
+    if sys.version_info > (3, 0):
+        def __str__(self):
+            return self.__unicode__()
+    else:
+        def __str__(self):
+            return unicode(self).encode('utf-8')

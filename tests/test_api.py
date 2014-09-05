@@ -3,9 +3,10 @@ import pytest
 import dateutil.parser
 from .factories import DepartmentFactory
 from functools import reduce
+from dash.compat import UnicodeMixin
 
 
-class Url(object):
+class Url(UnicodeMixin):
 
     def __init__(self, entity_name, entity_id=None, prefix=""):
         self.entity_name = entity_name
@@ -49,9 +50,6 @@ class Url(object):
             yield (self.entity_name, self.entity_id)
 
         return reduce(f, it(), self.prefix)
-
-    def __str__(self):
-        return str(unicode(self))
 
 
 class TestCatalogEntityApi(object):
