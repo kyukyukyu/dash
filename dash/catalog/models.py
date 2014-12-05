@@ -27,17 +27,16 @@ class CatalogEntity(SurrogatePK, Model, CreatedAtMixin):
 
     """An abstract class for catalog entities. The objects of subclasses of
     this class have column named ``code`` which identifies the objects in the
-    source database, column named ``name`` which represents the name of each
-    object, and column named ``created_at`` which represents when the object
-    was created in the application database.
+    source database, and column named ``created_at`` which represents when the
+    object was created in the application database.
     """
 
     __abstract__ = True
     code = Column(db.String(40), unique=False, nullable=False)
-    name = Column(db.String(80), unique=False, nullable=False)
 
 
 class Campus(CatalogEntity):
+    name = Column(db.String(80), unique=False, nullable=False)
     __tablename__ = 'campuses'
 
     def __repr__(self):
@@ -45,6 +44,7 @@ class Campus(CatalogEntity):
 
 
 class Department(CatalogEntity):
+    name = Column(db.String(80), unique=False, nullable=False)
     __tablename__ = 'departments'
     campus_id = ReferenceCol('campuses')
     campus = relationship('Campus', backref='departments')
@@ -54,6 +54,7 @@ class Department(CatalogEntity):
 
 
 class Subject(CatalogEntity):
+    name = Column(db.String(80), unique=False, nullable=False)
     __tablename__ = 'subjects'
 
     def __repr__(self):
@@ -84,7 +85,7 @@ class Course(CatalogEntity):
                           )
 
     def __repr__(self):
-        return '<Course({name})>'.format(name=self.name)
+        return '<Course({code})>'.format(code=self.code)
 
 
 class CourseHour(SurrogatePK, Model, CreatedAtMixin):

@@ -97,9 +97,8 @@ class TestCatalog:
         retrieved_subject = Subject.get_by_id(subject.id)
         assert retrieved_subject == subject
 
-        course = Course(code='10020', name='Software Engineering',
-                        subject=subject, department=department, credit=3.0,
-                        target_grade=3)
+        course = Course(code='10020', subject=subject, department=department,
+                        credit=3.0, target_grade=3)
         course.save()
 
         retrieved_course = Course.get_by_id(course.id)
@@ -152,7 +151,6 @@ class TestCatalog:
 
         course = CourseFactory()
         db.session.commit()
-        assert bool(course.name)
         assert bool(course.code)
         assert bool(course.created_at)
         assert bool(course.instructor)

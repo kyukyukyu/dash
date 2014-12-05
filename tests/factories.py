@@ -63,7 +63,6 @@ class SubjectFactory(BaseFactory):
 
 
 class CourseFactory(BaseFactory):
-    name = Sequence(lambda n: "course{0}".format(n))
     code = FuzzyText(length=5)
     instructor = FuzzyText(length=10)
     credit = FuzzyFloat(1.0, 6.0)

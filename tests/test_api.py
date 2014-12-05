@@ -62,7 +62,6 @@ class TestCatalogEntityApi(object):
     @classmethod
     def assert_entity(cls, entity, json):
         assert json['id'] == entity.id
-        assert json['name'] == entity.name
         assert json['code'] == entity.code
         assert dateutil.parser.parse(json['created_at']) == entity.created_at
 
@@ -74,6 +73,7 @@ class TestCampusApi(TestCatalogEntityApi):
     @classmethod
     def assert_entity(cls, entity, json):
         super(TestCampusApi, cls).assert_entity(entity, json)
+        assert json['name'] == entity.name
         map(TestDepartmentApi.assert_entity, entity.departments,
             json['departments'])
 
@@ -137,6 +137,7 @@ class TestDepartmentApi(TestCatalogEntityApi):
     @classmethod
     def assert_entity(cls, entity, json):
         super(TestDepartmentApi, cls).assert_entity(entity, json)
+        assert json['name'] == entity.name
         assert json['campus_id'] == entity.campus_id
 
     def test_get_department(self, departments, testapp):
