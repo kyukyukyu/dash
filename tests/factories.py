@@ -12,10 +12,10 @@ from factory.fuzzy import FuzzyText, FuzzyFloat, FuzzyInteger
 from dash.user.models import User
 from dash.catalog.models import (
     Campus,
-    Course,
+    Subject,
     Department,
-    Lecture,
-    LectureHour,
+    Course,
+    CourseHour,
 )
 from dash.database import db
 
@@ -54,54 +54,54 @@ class DepartmentFactory(BaseFactory):
         model = Department
 
 
-class CourseFactory(BaseFactory):
-    name = Sequence(lambda n: "course{0}".format(n))
+class SubjectFactory(BaseFactory):
+    name = Sequence(lambda n: "subject{0}".format(n))
     code = FuzzyText(length=7)
 
     class Meta:
-        model = Course
+        model = Subject
 
 
-class LectureFactory(BaseFactory):
+class CourseFactory(BaseFactory):
     name = Sequence(lambda n: "course{0}".format(n))
     code = FuzzyText(length=5)
     instructor = FuzzyText(length=10)
     credit = FuzzyFloat(1.0, 6.0)
     target_grade = FuzzyInteger(1, 5)
-    course = SubFactory(CourseFactory)
+    subject = SubFactory(SubjectFactory)
     department = SubFactory(DepartmentFactory)
 
     class Meta:
-        model = Lecture
+        model = Course
 
     @post_generation
     def hours(self, create, extracted, **kwargs):
         _hours = []
 
         if extracted:
-            for l_h in extracted:
-                l_h.lecture = self
-                _hours.append(l_h)
+            for c_h in extracted:
+                c_h.course = self
+                _hours.append(c_h)
         else:
             while len(_hours) < 2:
-                l_h = LectureHourFactory.build(lecture=self)
+                c_h = CourseHourFactory.build(course=self)
 
-                if any(l_h.conflicts_with(h) for h in _hours):
+                if any(c_h.conflicts_with(h) for h in _hours):
                     continue
 
                 if create:
-                    l_h.save()
+                    c_h.save()
 
-                _hours.append(l_h)
+                _hours.append(c_h)
 
         return _hours
 
 
-class LectureHourFactory(BaseFactory):
+class CourseHourFactory(BaseFactory):
     day_of_week = FuzzyInteger(0, 6)
     start_time = FuzzyInteger(1, 8)
     end_time = LazyAttribute(lambda o: o.start_time + 3)
-    lecture = SubFactory(LectureFactory)
+    course = SubFactory(CourseFactory)
 
     class Meta:
-        model = LectureHour
+        model = CourseHour

@@ -8,17 +8,17 @@ from dash.user.models import User, Role
 from dash.catalog.models import (
     Campus,
     Department,
+    Subject,
     Course,
-    Lecture,
-    LectureHour,
+    CourseHour,
 )
 from .factories import (
     UserFactory,
     CampusFactory,
     DepartmentFactory,
+    SubjectFactory,
     CourseFactory,
-    LectureFactory,
-    LectureHourFactory,
+    CourseHourFactory,
 )
 
 
@@ -91,40 +91,40 @@ class TestCatalog:
         retrieved_department = Department.get_by_id(department.id)
         assert retrieved_department == department
 
-        course = Course(code='CSE4006', name='Software Engineering')
+        subject = Subject(code='CSE4006', name='Software Engineering')
+        subject.save()
+
+        retrieved_subject = Subject.get_by_id(subject.id)
+        assert retrieved_subject == subject
+
+        course = Course(code='10020', name='Software Engineering',
+                        subject=subject, department=department, credit=3.0,
+                        target_grade=3)
         course.save()
 
         retrieved_course = Course.get_by_id(course.id)
         assert retrieved_course == course
 
-        lecture = Lecture(code='10020', name='Software Engineering',
-                          course=course, department=department, credit=3.0,
-                          target_grade=3)
-        lecture.save()
+        course_hour = CourseHour(day_of_week=2, start_time=14, end_time=17,
+                                 course=course)
+        course_hour.save()
 
-        retrieved_lecture = Lecture.get_by_id(lecture.id)
-        assert retrieved_lecture == lecture
+        retrieved_course_hour = CourseHour.get_by_id(course_hour.id)
+        assert retrieved_course_hour == course_hour
 
-        lecture_hour = LectureHour(day_of_week=2, start_time=14, end_time=17,
-                                   lecture=lecture)
-        lecture_hour.save()
+    def test_course_hour_conflicts_with(self):
+        c_h1 = CourseHourFactory(day_of_week=1, start_time=2, end_time=5)
+        c_h2 = CourseHourFactory(day_of_week=1, start_time=4, end_time=10)
+        c_h3 = CourseHourFactory(day_of_week=1, start_time=6, end_time=9)
+        c_h4 = CourseHourFactory(day_of_week=2, start_time=6, end_time=9)
 
-        retrieved_lecture_hour = LectureHour.get_by_id(lecture_hour.id)
-        assert retrieved_lecture_hour == lecture_hour
-
-    def test_lecture_hour_conflicts_with(self):
-        l_h1 = LectureHourFactory(day_of_week=1, start_time=2, end_time=5)
-        l_h2 = LectureHourFactory(day_of_week=1, start_time=4, end_time=10)
-        l_h3 = LectureHourFactory(day_of_week=1, start_time=6, end_time=9)
-        l_h4 = LectureHourFactory(day_of_week=2, start_time=6, end_time=9)
-
-        assert l_h1.conflicts_with(l_h2) and l_h2.conflicts_with(l_h1)
-        assert not l_h1.conflicts_with(l_h3) and not l_h3.conflicts_with(l_h1)
-        assert l_h2.conflicts_with(l_h3) and l_h3.conflicts_with(l_h2)
+        assert c_h1.conflicts_with(c_h2) and c_h2.conflicts_with(c_h1)
+        assert not c_h1.conflicts_with(c_h3) and not c_h3.conflicts_with(c_h1)
+        assert c_h2.conflicts_with(c_h3) and c_h3.conflicts_with(c_h2)
         assert all((
-            not l_h1.conflicts_with(l_h4) and not l_h4.conflicts_with(l_h1),
-            not l_h2.conflicts_with(l_h4) and not l_h4.conflicts_with(l_h2),
-            not l_h3.conflicts_with(l_h4) and not l_h4.conflicts_with(l_h3),
+            not c_h1.conflicts_with(c_h4) and not c_h4.conflicts_with(c_h1),
+            not c_h2.conflicts_with(c_h4) and not c_h4.conflicts_with(c_h2),
+            not c_h3.conflicts_with(c_h4) and not c_h4.conflicts_with(c_h3),
         ))
 
     def test_factory(self, db):
@@ -144,35 +144,35 @@ class TestCatalog:
         assert bool(department.campus_id)
         assert department in department.campus.departments
 
+        subject = SubjectFactory()
+        db.session.commit()
+        assert bool(subject.name)
+        assert bool(subject.code)
+        assert bool(subject.created_at)
+
         course = CourseFactory()
         db.session.commit()
         assert bool(course.name)
         assert bool(course.code)
         assert bool(course.created_at)
+        assert bool(course.instructor)
+        assert bool(course.credit)
+        assert bool(course.target_grade)
+        assert bool(course.subject)
+        assert course in course.subject.courses
+        assert bool(course.subject_id)
+        assert bool(course.department)
+        assert course in course.department.courses
+        assert bool(course.department_id)
+        assert bool(course.campus)
+        assert course in course.campus.courses
 
-        lecture = LectureFactory()
+        course_hour = CourseHourFactory()
         db.session.commit()
-        assert bool(lecture.name)
-        assert bool(lecture.code)
-        assert bool(lecture.created_at)
-        assert bool(lecture.instructor)
-        assert bool(lecture.credit)
-        assert bool(lecture.target_grade)
-        assert bool(lecture.course)
-        assert lecture in lecture.course.lectures
-        assert bool(lecture.course_id)
-        assert bool(lecture.department)
-        assert lecture in lecture.department.lectures
-        assert bool(lecture.department_id)
-        assert bool(lecture.campus)
-        assert lecture in lecture.campus.lectures
-
-        lecture_hour = LectureHourFactory()
-        db.session.commit()
-        assert bool(lecture_hour.created_at)
-        assert 0 <= lecture_hour.day_of_week < 7
-        assert lecture_hour.start_time >= 0
-        assert lecture_hour.end_time >= 0
-        assert bool(lecture_hour.lecture)
-        assert lecture_hour in lecture_hour.lecture.hours
-        assert bool(lecture_hour.lecture_id)
+        assert bool(course_hour.created_at)
+        assert 0 <= course_hour.day_of_week < 7
+        assert course_hour.start_time >= 0
+        assert course_hour.end_time >= 0
+        assert bool(course_hour.course)
+        assert course_hour in course_hour.course.hours
+        assert bool(course_hour.course_id)

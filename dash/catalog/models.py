@@ -11,15 +11,6 @@ from dash.database import (
 )
 
 
-class CodeMixin(object):
-
-    """A mixin that adds a column named ``code`` which identifies the objects
-    of specific class in the source database.
-    """
-
-    code = Column(db.String(40), nullable=False)
-
-
 class CreatedAtMixin(object):
 
     """A mixin that adds a column named ``created_at`` which represents when
@@ -62,64 +53,64 @@ class Department(CatalogEntity):
         return '<Department({name})>'.format(name=self.name)
 
 
-class Course(CatalogEntity):
-    __tablename__ = 'courses'
+class Subject(CatalogEntity):
+    __tablename__ = 'subjects'
 
     def __repr__(self):
-        return '<Course({name})>'.format(name=self.name)
+        return '<Subject({name})>'.format(name=self.name)
 
 
-class Lecture(CatalogEntity):
-    __tablename__ = 'lectures'
+class Course(CatalogEntity):
+    __tablename__ = 'courses'
     __table_args__ = (
-        db.CheckConstraint('credit >= 0.0', name='ck_lectures_credit'),
+        db.CheckConstraint('credit >= 0.0', name='ck_courses_credit'),
         db.CheckConstraint('target_grade IS NULL OR target_grade >= 0',
-                           name='ck_lectures_target_grade',
+                           name='ck_courses_target_grade',
                            ),
     )
     instructor = Column(db.String(80), nullable=True)
     credit = Column(db.Float, nullable=False)
     target_grade = Column(db.Integer, nullable=True)
-    course_id = ReferenceCol('courses')
-    course = relationship('Course',
-                          backref=db.backref('lectures', lazy='dynamic'),
-                          )
+    subject_id = ReferenceCol('subjects')
+    subject = relationship('Subject',
+                           backref=db.backref('courses', lazy='dynamic'),
+                           )
     department_id = ReferenceCol('departments', nullable=True)
-    department = relationship('Department', backref='lectures')
+    department = relationship('Department', backref='courses')
     campus = relationship('Campus',
                           uselist=False,
                           secondary=Department.__table__,
-                          backref=db.backref('lectures', lazy='dynamic'),
+                          backref=db.backref('courses', lazy='dynamic'),
                           )
 
     def __repr__(self):
-        return '<Department({name})>'.format(name=self.name)
+        return '<Course({name})>'.format(name=self.name)
 
 
-class LectureHour(SurrogatePK, Model, CreatedAtMixin):
-    __tablename__ = 'lecture_hours'
+class CourseHour(SurrogatePK, Model, CreatedAtMixin):
+    __tablename__ = 'course_hours'
     __table_args__ = (
         db.CheckConstraint('day_of_week >= 0 AND day_of_week < 7',
-                           name='ck_lecture_hours_day_of_week'),
+                           name='ck_course_hours_day_of_week'),
         db.CheckConstraint('start_time >= 0 AND end_time >= 0 AND '
                            'start_time <= end_time',
-                           name='ck_lecture_hours_start_end_time'),
+                           name='ck_course_hours_start_end_time'),
     )
     day_of_week = Column(db.Integer, nullable=False)
     start_time = Column(db.Integer, nullable=False)
     end_time = Column(db.Integer, nullable=False)
-    lecture_id = ReferenceCol('lectures')
-    lecture = relationship(
-        'Lecture',
+    course_id = ReferenceCol('courses')
+    course = relationship(
+        'Course',
         backref=db.backref(
             'hours',
-            order_by='LectureHour.day_of_week, LectureHour.start_time',
+            order_by='CourseHour.day_of_week, CourseHour.start_time',
         ),
         )
 
     def conflicts_with(self, h):
-        if not isinstance(h, LectureHour):
-            raise TypeError('h should be a LectureHour object')
+        if not isinstance(h, CourseHour):
+            raise TypeError('h should be a CourseHour object')
 
         return (
             self.day_of_week == h.day_of_week and (
@@ -129,7 +120,7 @@ class LectureHour(SurrogatePK, Model, CreatedAtMixin):
         )
 
     def __repr__(self):
-        return '<LectureHour({day_of_week}, {start_time}, {end_time})>' \
+        return '<CourseHour({day_of_week}, {start_time}, {end_time})>' \
             .format(day_of_week=self.day_of_week,
                     start_time=self.start_time,
                     end_time=self.end_time,
