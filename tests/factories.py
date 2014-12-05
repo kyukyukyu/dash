@@ -81,17 +81,6 @@ class CourseFactory(BaseFactory):
             for c_h in extracted:
                 c_h.course = self
                 _hours.append(c_h)
-        else:
-            while len(_hours) < 2:
-                c_h = CourseHourFactory.build(course=self)
-
-                if any(c_h.conflicts_with(h) for h in _hours):
-                    continue
-
-                if create:
-                    c_h.save()
-
-                _hours.append(c_h)
 
         return _hours
 
