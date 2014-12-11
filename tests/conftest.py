@@ -54,7 +54,7 @@ def user(db):
     return user
 
 
-@pytest.fixture
+@pytest.fixture(scope='function')
 def campuses(db):
     campuses = [
         CampusFactory(name="HYU Seoul", code="H0002256"),
@@ -64,7 +64,7 @@ def campuses(db):
     return campuses
 
 
-@pytest.fixture
+@pytest.fixture(scope='function')
 def departments(db, campuses):
     hyu_seoul = campuses[0]
     _departments = [
@@ -108,7 +108,7 @@ def departments(db, campuses):
     return _departments
 
 
-@pytest.fixture
+@pytest.fixture(scope='function')
 def subjects(db):
     _subjects = [
         SubjectFactory(
@@ -144,7 +144,7 @@ def subjects(db):
     return _subjects
 
 
-@pytest.fixture
+@pytest.fixture(scope='function')
 def courses(db, departments, subjects):
     _courses = [
         CourseFactory(
