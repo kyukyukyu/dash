@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
+import collections
 import pytest
 import dateutil.parser
+from six import text_type as unicode
+from six.moves.urllib import parse
 from .factories import DepartmentFactory
 from functools import reduce
 from dash.compat import UnicodeMixin
@@ -8,18 +11,35 @@ from dash.compat import UnicodeMixin
 
 class Url(UnicodeMixin):
 
-    def __init__(self, entity_name, entity_id=None, prefix=""):
-        self.entity_name = entity_name
-        self.entity_id = entity_id
-        self.path = []
-        self.prefix = prefix
+    def __init__(self, entity_name, entity_id=None, prefix=u""):
+        self.entity_name = unicode(entity_name)
+        self.entity_id = unicode(entity_id) if entity_id is not None else None
+        self.path = list()
+        self.prefix = unicode(prefix)
+        self._query = dict()
+
+    @classmethod
+    def copy(cls, url_obj):
+        if not isinstance(url_obj, Url):
+            raise TypeError('url_obj should be an Url object')
+
+        u = Url(unicode(url_obj.entity_name))
+        entity_id = url_obj.entity_id
+        u.entity_id = unicode(entity_id) if entity_id is not None else None
+        u.path = list(url_obj.path)
+        u.prefix = unicode(url_obj.prefix)
+        u._query = dict(url_obj._query)
+
+        return u
 
     def collection(self, entity_name):
         if self.entity_id is None:
             raise ValueError('cannot call collection() on the Url object '
                              'which has no entity_id')
-        u = Url(entity_name, prefix=self.prefix)
-        u.path = self.path + [(self.entity_name, self.entity_id)]
+        u = Url.copy(self)
+        u.entity_name = entity_name
+        u.entity_id = None
+        u.path.append((self.entity_name, self.entity_id))
         return u
 
     def col(self, entity_name):
@@ -29,12 +49,25 @@ class Url(UnicodeMixin):
         if self.entity_id is not None:
             raise ValueError('cannot call entity() on the Url object '
                              'which has entity_id')
-        u = Url(self.entity_name, entity_id, prefix=self.prefix)
-        u.path = self.path
+        u = Url.copy(self)
+        u.entity_id = entity_id
         return u
 
     def ent(self, entity_id):
         return self.entity(entity_id)
+
+    def query(self, mapping=None, **kwargs):
+        _query_new = dict(self._query)
+
+        if mapping is not None:
+            if not isinstance(mapping, collections.Mapping):
+                raise TypeError('mapping should be a mapping object')
+            _query_new.update(mapping)
+        _query_new.update(kwargs)
+
+        u = Url.copy(self)
+        u._query.update(_query_new)
+        return u
 
     def __unicode__(self):
         def f(x, y):
@@ -49,7 +82,11 @@ class Url(UnicodeMixin):
 
             yield (self.entity_name, self.entity_id)
 
-        return reduce(f, it(), self.prefix)
+        url = reduce(f, it(), self.prefix)
+        if self._query:
+            url = u"{}?{}".format(url, parse.urlencode(self._query))
+
+        return url
 
 
 class TestCatalogEntityApi(object):
