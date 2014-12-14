@@ -186,6 +186,8 @@ class TestCatalog:
             assert bool(course.subject)
             assert course in course.subject.courses
             assert bool(course.subject_id)
+            assert bool(course.name)
+            assert course.name == course.subject.name
             assert bool(course.department)
             assert course in course.department.courses
             assert bool(course.department_id)

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import datetime as dt
 
+from sqlalchemy.ext.hybrid import hybrid_property
 from dash.database import (
     Column,
     db,
@@ -82,6 +83,14 @@ class Course(CatalogEntity):
                           secondary=Department.__table__,
                           backref=db.backref('courses', lazy='dynamic'),
                           )
+
+    @hybrid_property
+    def name(self):
+        return self.subject.name
+
+    @name.expression
+    def name(self):
+        return Subject.name
 
     __mapper_args__ = {
         'polymorphic_on': type,
