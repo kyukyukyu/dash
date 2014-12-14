@@ -63,20 +63,19 @@ class Subject(CatalogEntity):
 
 class Course(CatalogEntity):
     __tablename__ = 'courses'
-    __table_args__ = (
-        db.CheckConstraint('credit >= 0.0', name='ck_courses_credit'),
-        db.CheckConstraint('target_grade IS NULL OR target_grade >= 0',
-                           name='ck_courses_target_grade',
-                           ),
-    )
+    type = Column(db.String(40), nullable=False)
     instructor = Column(db.String(80), nullable=True)
-    credit = Column(db.Float, nullable=False)
-    target_grade = Column(db.Integer, nullable=True)
+    credit = Column(db.Float,
+                    db.CheckConstraint('credit >= 0.0',
+                                       name='ck_courses_credit',
+                                       ),
+                    nullable=False,
+                    )
     subject_id = ReferenceCol('subjects')
     subject = relationship('Subject',
                            backref=db.backref('courses', lazy='dynamic'),
                            )
-    department_id = ReferenceCol('departments', nullable=True)
+    department_id = ReferenceCol('departments')
     department = relationship('Department', backref='courses')
     campus = relationship('Campus',
                           uselist=False,
@@ -84,19 +83,61 @@ class Course(CatalogEntity):
                           backref=db.backref('courses', lazy='dynamic'),
                           )
 
+    __mapper_args__ = {
+        'polymorphic_on': type,
+        'with_polymorphic': '*',
+    }
+
     def __repr__(self):
         return '<Course({code})>'.format(code=self.code)
 
 
+class GenEduCategory(CatalogEntity):
+    name = Column(db.String(80), unique=False, nullable=False)
+    __tablename__ = 'gen_edu_categories'
+
+    def __repr__(self):
+        return '<GenEduCategory({name})>'.format(name=self.name)
+
+
+class GeneralCourse(Course):
+    __tablename__ = 'general_courses'
+    id = ReferenceCol('courses', primary_key=True)
+    category_id = ReferenceCol('gen_edu_categories')
+    category = relationship('GenEduCategory',
+                            backref=db.backref('courses', lazy='dynamic'),
+                            )
+
+    TYPE = 'general'
+    __mapper_args__ = {
+        'polymorphic_identity': TYPE,
+    }
+
+    def __repr__(self):
+        return '<GeneralCourse({code})>'.format(code=self.code)
+
+
+class MajorCourse(Course):
+    __tablename__ = 'major_courses'
+    __table_args__ = (
+        db.CheckConstraint('target_grade IS NULL OR target_grade >= 0',
+                           name='ck_general_courses_target_grade',
+                           ),
+    )
+    id = ReferenceCol('courses', primary_key=True)
+    target_grade = Column(db.Integer, nullable=True)
+
+    TYPE = 'major'
+    __mapper_args__ = {
+        'polymorphic_identity': TYPE,
+    }
+
+    def __repr__(self):
+        return '<MajorCourse({code})>'.format(code=self.code)
+
+
 class CourseHour(SurrogatePK, Model, CreatedAtMixin):
     __tablename__ = 'course_hours'
-    __table_args__ = (
-        db.CheckConstraint('day_of_week >= 0 AND day_of_week < 7',
-                           name='ck_course_hours_day_of_week'),
-        db.CheckConstraint('start_time >= 0 AND end_time >= 0 AND '
-                           'start_time <= end_time',
-                           name='ck_course_hours_start_end_time'),
-    )
     day_of_week = Column(db.Integer, nullable=False)
     start_time = Column(db.Integer, nullable=False)
     end_time = Column(db.Integer, nullable=False)
@@ -108,6 +149,14 @@ class CourseHour(SurrogatePK, Model, CreatedAtMixin):
             order_by='CourseHour.day_of_week, CourseHour.start_time',
         ),
         )
+
+    __table_args__ = (
+        db.CheckConstraint('day_of_week >= 0 AND day_of_week < 7',
+                           name='ck_course_hours_day_of_week'),
+        db.CheckConstraint('start_time >= 0 AND end_time >= 0 AND '
+                           'start_time <= end_time',
+                           name='ck_course_hours_start_end_time'),
+    )
 
     def conflicts_with(self, h):
         if not isinstance(h, CourseHour):

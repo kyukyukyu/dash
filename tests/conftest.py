@@ -14,7 +14,9 @@ from .factories import (
     CampusFactory,
     DepartmentFactory,
     SubjectFactory,
-    CourseFactory,
+    GenEduCategoryFactory,
+    GeneralCourseFactory,
+    MajorCourseFactory,
     CourseHourFactory,
 )
 
@@ -103,6 +105,11 @@ def departments(db, campuses):
             code="H0002719",
             campus=hyu_seoul,
         ),
+        DepartmentFactory(
+            name="College",
+            code="H0002256",
+            campus=hyu_seoul,
+        ),
     ]
     db.session.commit()
     return _departments
@@ -145,9 +152,25 @@ def subjects(db):
 
 
 @pytest.fixture(scope='function')
-def courses(db, departments, subjects):
+def gen_edu_categories(db):
+    _categories = [
+        GenEduCategoryFactory(
+            code="B4",
+            name="Business and Leadership",
+        ),
+        GenEduCategoryFactory(
+            code="B1",
+            name="Liberal Arts",
+        ),
+    ]
+    db.session.commit()
+    return _categories
+
+
+@pytest.fixture(scope='function')
+def courses(db, departments, subjects, gen_edu_categories):
     _courses = [
-        CourseFactory(
+        MajorCourseFactory(
             code="10037",
             instructor="Euee S. Jang",
             credit=2.00,
@@ -155,15 +178,15 @@ def courses(db, departments, subjects):
             subject=subjects[0],        # Understanding Patent Law
             department=departments[0],  # Major in Computer Engineering
         ),
-        CourseFactory(
+        GeneralCourseFactory(
             code="15254",
             instructor="Sunny Yoon",
             credit=2.00,
-            target_grade=None,
-            subject=subjects[0],        # Understanding Patent Law
-            department=None,
+            subject=subjects[0],                # Understanding Patent Law
+            category=gen_edu_categories[0],     # Business and Leadership
+            department=departments[7],          # College
         ),
-        CourseFactory(
+        MajorCourseFactory(
             code="11552",
             instructor="Sunny Yoon",
             credit=3.00,
@@ -171,7 +194,7 @@ def courses(db, departments, subjects):
             subject=subjects[1],        # Media Criticism
             department=departments[5],  # Department of Media Communication
         ),
-        CourseFactory(
+        MajorCourseFactory(
             code="12798",
             instructor="Sunny Yoon",
             credit=3.00,
@@ -179,15 +202,15 @@ def courses(db, departments, subjects):
             subject=subjects[2],        # Visual Culture
             department=departments[5],  # Department of Media Communication
         ),
-        CourseFactory(
+        GeneralCourseFactory(
             code="15002",
             instructor="Park Eun Jung",
             credit=2.00,
-            target_grade=None,
             subject=subjects[3],        # Understanding The Chinese Literature
-            department=None,
+            category=gen_edu_categories[1],     # Liberal Arts
+            department=departments[7],          # College
         ),
-        CourseFactory(
+        MajorCourseFactory(
             code="11543",
             instructor="Kim Soochul",
             credit=3.00,
@@ -195,7 +218,7 @@ def courses(db, departments, subjects):
             subject=subjects[4],        # Understanding Digital Media
             department=departments[5],  # Department of Media Communication
         ),
-        CourseFactory(
+        MajorCourseFactory(
             code="11615",
             instructor="Lee Sang Hwa",
             credit=3.00,
@@ -203,7 +226,7 @@ def courses(db, departments, subjects):
             subject=subjects[5],        # Signals and Systems
             department=departments[0],  # Major in Computer Engineering
         ),
-        CourseFactory(
+        MajorCourseFactory(
             code="11970",
             instructor="Cho Eun Pa",
             credit=2.00,

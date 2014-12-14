@@ -10,6 +10,9 @@ from dash.catalog.models import (
     Department,
     Subject,
     Course,
+    GenEduCategory,
+    GeneralCourse,
+    MajorCourse,
     CourseHour,
 )
 from .factories import (
@@ -17,7 +20,9 @@ from .factories import (
     CampusFactory,
     DepartmentFactory,
     SubjectFactory,
-    CourseFactory,
+    GenEduCategoryFactory,
+    GeneralCourseFactory,
+    MajorCourseFactory,
     CourseHourFactory,
 )
 
@@ -97,12 +102,30 @@ class TestCatalog:
         retrieved_subject = Subject.get_by_id(subject.id)
         assert retrieved_subject == subject
 
-        course = Course(code='10020', subject=subject, department=department,
-                        credit=3.0, target_grade=3)
+        gen_edu_category = GenEduCategory(code='B4',
+                                          name='Business and Leadership')
+        gen_edu_category.save()
+
+        retrieved_category = GenEduCategory.get_by_id(gen_edu_category.id)
+        assert retrieved_category == gen_edu_category
+
+        course = GeneralCourse(code='10020', subject=subject, credit=3.0,
+                               department=department)
+        course.category = gen_edu_category
         course.save()
 
         retrieved_course = Course.get_by_id(course.id)
+        assert isinstance(retrieved_course, GeneralCourse)
         assert retrieved_course == course
+
+        course2 = MajorCourse(code='10020', subject=subject,
+                              department=department, credit=3.0,
+                              target_grade=3)
+        course2.save()
+
+        retrieved_course = Course.get_by_id(course2.id)
+        assert isinstance(retrieved_course, MajorCourse)
+        assert retrieved_course == course2
 
         course_hour = CourseHour(day_of_week=2, start_time=14, end_time=17,
                                  course=course)
@@ -149,21 +172,37 @@ class TestCatalog:
         assert bool(subject.code)
         assert bool(subject.created_at)
 
-        course = CourseFactory()
+        gen_edu_category = GenEduCategoryFactory()
         db.session.commit()
-        assert bool(course.code)
-        assert bool(course.created_at)
-        assert bool(course.instructor)
-        assert bool(course.credit)
-        assert bool(course.target_grade)
-        assert bool(course.subject)
-        assert course in course.subject.courses
-        assert bool(course.subject_id)
-        assert bool(course.department)
-        assert course in course.department.courses
-        assert bool(course.department_id)
-        assert bool(course.campus)
-        assert course in course.campus.courses
+        assert bool(gen_edu_category.name)
+        assert bool(gen_edu_category.code)
+        assert bool(gen_edu_category.created_at)
+
+        def assert_course(course):
+            assert bool(course.code)
+            assert bool(course.created_at)
+            assert bool(course.instructor)
+            assert bool(course.credit)
+            assert bool(course.subject)
+            assert course in course.subject.courses
+            assert bool(course.subject_id)
+            assert bool(course.department)
+            assert course in course.department.courses
+            assert bool(course.department_id)
+            assert bool(course.campus)
+            assert course in course.campus.courses
+
+        general_course = GeneralCourseFactory()
+        db.session.commit()
+        assert_course(general_course)
+        assert bool(general_course.category)
+        assert general_course in general_course.category.courses
+        assert bool(general_course.category_id)
+
+        major_course = MajorCourseFactory()
+        db.session.commit()
+        assert_course(major_course)
+        assert bool(major_course.target_grade)
 
         course_hour = CourseHourFactory()
         db.session.commit()

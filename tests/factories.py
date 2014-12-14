@@ -14,7 +14,9 @@ from dash.catalog.models import (
     Campus,
     Subject,
     Department,
-    Course,
+    GenEduCategory,
+    GeneralCourse,
+    MajorCourse,
     CourseHour,
 )
 from dash.database import db
@@ -66,12 +68,8 @@ class CourseFactory(BaseFactory):
     code = FuzzyText(length=5)
     instructor = FuzzyText(length=10)
     credit = FuzzyFloat(1.0, 6.0)
-    target_grade = FuzzyInteger(1, 5)
     subject = SubFactory(SubjectFactory)
     department = SubFactory(DepartmentFactory)
-
-    class Meta:
-        model = Course
 
     @post_generation
     def hours(self, create, extracted, **kwargs):
@@ -85,11 +83,33 @@ class CourseFactory(BaseFactory):
         return _hours
 
 
+class GenEduCategoryFactory(BaseFactory):
+    name = Sequence(lambda n: "gen-edu-category{0}".format(n))
+    code = FuzzyText(length=2)
+
+    class Meta:
+        model = GenEduCategory
+
+
+class GeneralCourseFactory(CourseFactory):
+    category = SubFactory(GenEduCategoryFactory)
+
+    class Meta:
+        model = GeneralCourse
+
+
+class MajorCourseFactory(CourseFactory):
+    target_grade = FuzzyInteger(1, 5)
+
+    class Meta:
+        model = MajorCourse
+
+
 class CourseHourFactory(BaseFactory):
     day_of_week = FuzzyInteger(0, 6)
     start_time = FuzzyInteger(1, 8)
     end_time = LazyAttribute(lambda o: o.start_time + 3)
-    course = SubFactory(CourseFactory)
+    course = SubFactory(MajorCourseFactory)
 
     class Meta:
         model = CourseHour
