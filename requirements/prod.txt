@@ -35,3 +35,5 @@ Flask-Cache>=0.12
 
 # REST API
 Flask-Restless==0.14.0
+# Date Utilities
+python-dateutil==2.3

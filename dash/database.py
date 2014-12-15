@@ -2,6 +2,9 @@
 """Database module, including the SQLAlchemy database object and DB-related
 utilities.
 """
+import datetime
+from dateutil.tz import tzutc
+from sqlalchemy import types
 from sqlalchemy.orm import relationship
 
 from .extensions import db
@@ -82,3 +85,23 @@ def ReferenceCol(tablename, nullable=False, pk_name='id', **kwargs):
     return db.Column(
         db.ForeignKey("{0}.{1}".format(tablename, pk_name)),
         nullable=nullable, **kwargs)
+
+
+# Source: http://stackoverflow.com/a/2528453/1407838
+class UTCDateTime(types.TypeDecorator):
+
+    """A subtype of :class:`sqlalchemy.types.DateTime` which forces time zone
+    data to be UTC.
+    """
+
+    impl = types.DateTime
+
+    def process_bind_param(self, value, dialect):
+        if value is not None:
+            return value.astimezone(tzutc())
+
+    def process_result_value(self, value, dialect):
+        if value is not None:
+            return datetime.datetime(value.year, value.month, value.day,
+                                     value.hour, value.minute, value.second,
+                                     value.microsecond, tzinfo=tzutc())

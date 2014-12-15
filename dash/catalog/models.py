@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-import datetime as dt
-
 from sqlalchemy.ext.hybrid import hybrid_property
 from dash.database import (
     Column,
@@ -9,7 +7,9 @@ from dash.database import (
     ReferenceCol,
     relationship,
     SurrogatePK,
+    UTCDateTime,
 )
+from dash.utils import utcnow
 
 
 class CreatedAtMixin(object):
@@ -18,9 +18,9 @@ class CreatedAtMixin(object):
     the object was created in the application database.
     """
 
-    created_at = Column(db.DateTime,
+    created_at = Column(UTCDateTime(timezone=True),
                         nullable=False,
-                        default=dt.datetime.utcnow
+                        default=utcnow,
                         )
 
 
