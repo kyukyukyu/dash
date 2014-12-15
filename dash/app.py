@@ -10,7 +10,7 @@ from dash.extensions import (
     db,
     login_manager,
     migrate,
-    api_manager,
+    api,
 )
 from dash import public, user, catalog
 
@@ -36,7 +36,7 @@ def register_extensions(app):
     db.init_app(app)
     login_manager.init_app(app)
     migrate.init_app(app, db)
-    api_manager.init_app(app, flask_sqlalchemy_db=db)
+    api.init_app(app)
 
     if app.config.get('ENV') == 'dev':
         from dash.extensions_dev import (
@@ -48,15 +48,8 @@ def register_extensions(app):
 
 
 def register_blueprints(app):
-    from dash.catalog.api import (
-        campus_blueprint,
-        department_blueprint,
-    )
-
     app.register_blueprint(public.views.blueprint)
     app.register_blueprint(user.views.blueprint)
-    app.register_blueprint(campus_blueprint)
-    app.register_blueprint(department_blueprint)
     return None
 
 

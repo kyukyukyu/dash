@@ -34,6 +34,7 @@ Flask-Bcrypt==0.6.0
 Flask-Cache>=0.12
 
 # REST API
-Flask-Restless==0.14.0
+Flask-RESTful==0.3.1
+
 # Date Utilities
 python-dateutil==2.3

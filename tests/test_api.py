@@ -100,7 +100,8 @@ class TestCatalogEntityApi(object):
     def assert_entity(cls, entity, json):
         assert json['id'] == entity.id
         assert json['code'] == entity.code
-        assert dateutil.parser.parse(json['created_at']) == entity.created_at
+        assert dateutil.parser.parse(json['created_at']) == \
+               entity.created_at.replace(microsecond=0)
 
 
 class TestCampusApi(TestCatalogEntityApi):
