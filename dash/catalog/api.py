@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
+from functools import wraps
 from flask import Blueprint, render_template
 from collections import Mapping
-from six import add_metaclass, iteritems
-from flask.views import MethodViewType
+from six import iteritems
 from flask.ext.login import login_required
 from flask.ext.restful import (
     Resource,
@@ -46,7 +46,7 @@ subject_fields = extend(entity_fields, {
 })
 
 
-class Entity(Resource):
+class ResourceWithQuery(Resource):
     model = None
     fields = None
 
@@ -54,23 +54,18 @@ class Entity(Resource):
     def query(cls, **kwargs):
         return cls.model.query
 
+
+class Entity(ResourceWithQuery):
     def get(self, **kwargs):
         id = kwargs['id']
         entity = self.query(**kwargs).filter_by(id=id).one()
         return marshal(entity, self.fields), 200
 
 
-class Collection(Resource):
-    model = None
-    fields = None
-
+class Collection(ResourceWithQuery):
     parser = reqparse.RequestParser()
     parser.add_argument('page', type=int)
     parser.add_argument('results_per_page', type=int)
-
-    @classmethod
-    def query(cls, **kwargs):
-        return cls.model.query
 
     def get(self, **kwargs):
         args = self.parser.parse_args()
@@ -91,69 +86,89 @@ class Collection(Resource):
         }, 200
 
 
-class Campus(Entity):
+def when(variable, query_processor, **query_processors):
+    """A decorator for subclasses of :class:`dash.catalog.api.QueryMixin`
+    which enables query processing according to existence of variables of URL
+    routing rule.
+
+    :param variable: Name of variable in URL routing rule.
+    :param query_processor: Function which processes
+                            :class:`sqlalchemy.orm.query.Query` object. This
+                            function should accept a
+                            :class:`sqlalchemy.orm.query.Query` object and the
+                            value of variable as arguments, and return a
+                            :class:`sqlalchemy.orm.query.Query` object.
+    :param query_processors: Keyword arguments of which the key is name of
+                             variable in URL routing rule, and the value is
+                             query processor function for the variable.
+    """
+    def decorator(cls):
+        query_processors.update([(variable, query_processor)])
+
+        def query_decorator(f):
+            @wraps(f)
+            def wrapper(kls, *args, **kwargs):
+                query = f(*args, **kwargs)
+                for v, p in iteritems(query_processors):
+                    if v in kwargs:
+                        query = p(query, kwargs[v])
+                return query
+            return wrapper
+
+        cls.query = query_decorator(cls.query)
+        return cls
+
+    return decorator
+
+
+class CampusMixin(object):
     model = models.Campus
     fields = campus_fields
 
 
-class CampusList(Collection):
-    model = models.Campus
-    fields = campus_fields
+class Campus(CampusMixin, Entity):
+    pass
 
 
-class Department(Entity):
+class CampusList(CampusMixin, Collection):
+    pass
+
+qp_campus_id = lambda q, v: q.filter(models.Department.campus_id == v)
+
+
+class DepartmentMixin(object):
     model = models.Department
     fields = department_fields
 
 
-class DepartmentList(Collection):
-    model = models.Department
-    fields = department_fields
+@when('campus_id', qp_campus_id)
+class Department(DepartmentMixin, Entity):
+    pass
 
 
-class ResourceUnderResource(MethodViewType):
-    def __new__(mcs, clsname, bases, dct):
-        new_dct = dict(dct)
-        parent_column_name = new_dct.pop('parent_column_name')
-
-        @classmethod
-        def query(cls, **kwargs):
-            q = super(cls, cls).query(**kwargs)
-            parent_id = kwargs[parent_column_name]
-            parent_column = getattr(cls.model, parent_column_name)
-            return q.filter(parent_column == parent_id)
-
-        new_dct['query'] = query
-
-        return super(ResourceUnderResource, mcs).__new__(mcs, clsname, bases,
-                                                         new_dct)
+@when('campus_id', qp_campus_id)
+class DepartmentList(DepartmentMixin, Collection):
+    pass
 
 
-@add_metaclass(ResourceUnderResource)
-class CampusDepartment(Department):
-    parent_column_name = 'campus_id'
-
-
-@add_metaclass(ResourceUnderResource)
-class CampusDepartmentList(DepartmentList):
-    parent_column_name = 'campus_id'
-
-
-class Subject(Entity):
+class SubjectMixin(object):
     model = models.Subject
     fields = subject_fields
 
 
-class SubjectList(Collection):
-    model = models.Subject
-    fields = subject_fields
+class Subject(SubjectMixin, Entity):
+    pass
+
+
+class SubjectList(SubjectMixin, Collection):
+    pass
 
 
 api.add_resource(Campus, '/campuses/<int:id>')
 api.add_resource(CampusList, '/campuses')
-api.add_resource(Department, '/departments/<int:id>')
-api.add_resource(DepartmentList, '/departments')
-api.add_resource(CampusDepartment, '/campuses/<int:campus_id>'
-                                   '/departments/<int:id>')
-api.add_resource(CampusDepartmentList, '/campuses/<int:campus_id>'
-                                       '/departments')
+api.add_resource(Department,
+                 '/departments/<int:id>',
+                 '/campuses/<int:campus_id>/departments/<int:id>')
+api.add_resource(DepartmentList,
+                 '/departments',
+                 '/campuses/<int:campus_id>/departments')
