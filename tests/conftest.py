@@ -69,6 +69,7 @@ def campuses(db):
 @pytest.fixture(scope='function')
 def departments(db, campuses):
     hyu_seoul = campuses[0]
+    hyu_erica = campuses[1]
     _departments = [
         DepartmentFactory(
             name="Major in Computer Engineering",
@@ -110,6 +111,21 @@ def departments(db, campuses):
             code="H0002256",
             campus=hyu_seoul,
         ),
+        DepartmentFactory(
+            name="Department of Korean Language & Literature",
+            code="Y0000452",
+            campus=hyu_erica,
+        ),
+        DepartmentFactory(
+            name="Department of Cultural Anthropology",
+            code="Y0000467",
+            campus=hyu_erica,
+        ),
+        DepartmentFactory(
+            name="College",
+            code="Y0000316",
+            campus=hyu_erica,
+        ),
     ]
     db.session.commit()
     return _departments
@@ -146,6 +162,26 @@ def subjects(db):
             name="Understanding Literature",
             code="KLE2009",
         ),
+        SubjectFactory(
+            name="Understanding Classical Poetry",
+            code="KOR3043",
+        ),
+        SubjectFactory(
+            name="Understanding Middle East and Islamic World",
+            code="ANT4034",
+        ),
+        SubjectFactory(
+            name="Dynamics in the Korean Language",
+            code="KOR1011",
+        ),
+        SubjectFactory(
+            name="Understanding of the Third World Culture",
+            code="CUL0092",
+        ),
+        SubjectFactory(
+            name="History of The Earth",
+            code="CUL2076",
+        ),
     ]
     db.session.commit()
     return _subjects
@@ -162,6 +198,14 @@ def gen_edu_categories(db):
             code="B1",
             name="Liberal Arts",
         ),
+        GenEduCategoryFactory(
+            code="E5",
+            name="Language and World Culture",
+        ),
+        GenEduCategoryFactory(
+            code="E3",
+            name="Science Technology and Environment",
+        ),
     ]
     db.session.commit()
     return _categories
@@ -169,6 +213,8 @@ def gen_edu_categories(db):
 
 @pytest.fixture(scope='function')
 def courses(db, departments, subjects, gen_edu_categories):
+    # There is a rule for fixture data that codes of courses from HYU Seoul
+    # start with "1", and ones from HYU ERICA starts with "2".
     _courses = [
         MajorCourseFactory(
             code="10037",
@@ -234,6 +280,51 @@ def courses(db, departments, subjects, gen_edu_categories):
             subject=subjects[6],        # Understanding Literature
             department=departments[6],  # Department of Korean Language
                                         # Education
+        ),
+        MajorCourseFactory(
+            code="22294",
+            instructor="Kim, Sang-jean",
+            credit=3.00,
+            target_grade=3,
+            subject=subjects[7],        # Understanding Classical Poetry
+            department=departments[8],  # Department of Korean Language &
+                                        # Literature
+        ),
+        MajorCourseFactory(
+            code="22361",
+            instructor="Lee, Hee-soo",
+            credit=3.00,
+            target_grade=4,
+            subject=subjects[8],        # Understanding Middle East and
+                                        # Islamic World
+            department=departments[9],  # Department of Cultural Anthropology
+        ),
+        MajorCourseFactory(
+            code="22291",
+            instructor="Kim, Zong-su",
+            credit=3.00,
+            target_grade=3,
+            subject=subjects[9],        # Dynamics in the Korean Language
+            department=departments[8],  # Department of Korean Language &
+                                        # Literature
+        ),
+        GeneralCourseFactory(
+            code="20025",
+            instructor="Kang, Kyoung-ran",
+            credit=2.00,
+            subject=subjects[10],       # Understanding of the Third World
+                                        # Culture
+            category=gen_edu_categories[2],     # Language and World Culture
+            department=departments[10],         # College
+        ),
+        GeneralCourseFactory(
+            code="20016",
+            instructor="Suk Dongwoo",
+            credit=2.00,
+            subject=subjects[11],       # History of The Earth
+            category=gen_edu_categories[3],     # Science Technology and
+                                                # Environment
+            department=departments[10],         # College
         ),
     ]
 
@@ -322,6 +413,64 @@ def courses(db, departments, subjects, gen_edu_categories):
         day_of_week=0,
         start_time=11,
         end_time=14,
+        course=c,
+    )
+
+    c = _courses[8]
+    CourseHourFactory(
+        day_of_week=0,
+        start_time=10,
+        end_time=12,
+        course=c,
+    )
+    CourseHourFactory(
+        day_of_week=1,
+        start_time=4,
+        end_time=6,
+        course=c,
+    )
+
+    c = _courses[9]
+    CourseHourFactory(
+        day_of_week=1,
+        start_time=16,
+        end_time=18,
+        course=c,
+    )
+    CourseHourFactory(
+        day_of_week=3,
+        start_time=6,
+        end_time=8,
+        course=c,
+    )
+
+    c = _courses[10]
+    CourseHourFactory(
+        day_of_week=3,
+        start_time=5,
+        end_time=7,
+        course=c,
+    )
+    CourseHourFactory(
+        day_of_week=3,
+        start_time=8,
+        end_time=10,
+        course=c,
+    )
+
+    c = _courses[11]
+    CourseHourFactory(
+        day_of_week=3,
+        start_time=15,
+        end_time=18,
+        course=c,
+    )
+
+    c = _courses[12]
+    CourseHourFactory(
+        day_of_week=2,
+        start_time=5,
+        end_time=8,
         course=c,
     )
 
