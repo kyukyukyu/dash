@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 import collections
+import itertools
 import pytest
 import dateutil.parser
 from six import text_type as unicode
 from six.moves.urllib import parse
-from .factories import DepartmentFactory
 from functools import reduce
 from dash.compat import UnicodeMixin
 
@@ -69,6 +69,16 @@ class Url(UnicodeMixin):
         u._query.update(_query_new)
         return u
 
+    def append(self, child_url):
+        if self.entity_id is None:
+            raise ValueError('cannot call append() on the Url object '
+                             'which has no entity_id')
+        u = Url.copy(self)
+        for entity_name, entity_id in child_url.path:
+            u = u.collection(entity_name).entity(entity_id)
+        u = u.collection(child_url.entity_name).entity(child_url.entity_id)
+        return u
+
     def __unicode__(self):
         def f(x, y):
             if y[1] is None:
@@ -92,7 +102,7 @@ class Url(UnicodeMixin):
 class TestCatalogEntityApi(object):
 
     @classmethod
-    def assert_response(self, resp):
+    def assert_response(cls, resp):
         assert resp.status_code == 200
         assert resp.content_type == 'application/json'
 
@@ -102,6 +112,53 @@ class TestCatalogEntityApi(object):
         assert json['code'] == entity.code
         assert dateutil.parser.parse(json['created_at']) == \
                entity.created_at.replace(microsecond=0)
+
+    @classmethod
+    def entity_test_under_campuses(cls, campuses, entity, testapp,
+                                   url_processors=[]):
+        for campus in itertools.chain([None], campuses):
+            should_exist = True
+            if campus:
+                url = TestCampusApi.base_url.ent(campus.id) \
+                    .append(cls.base_url).ent(entity.id)
+                if entity.campus is not campus:
+                    should_exist = False
+            else:
+                url = cls.base_url.ent(entity.id)
+
+            for processor in url_processors:
+                url = processor(url)
+
+            if should_exist:
+                resp = testapp.get(url)
+                cls.assert_response(resp)
+                cls.assert_entity(entity, resp.json)
+            else:
+                resp = testapp.get(url, status=404)
+
+    @classmethod
+    def collection_test_under_campuses(cls, campuses, collection, testapp,
+                                       url_processors=[]):
+        collection = sorted(collection, key=lambda o: o.id)
+        for campus in itertools.chain([None], campuses):
+            if campus:
+                url = TestCampusApi.base_url.ent(campus.id) \
+                    .append(cls.base_url)
+                expected_objs = [o for o in collection if o.campus == campus]
+            else:
+                url = cls.base_url
+                expected_objs = list(collection)
+
+            for processor in url_processors:
+                url = processor(url)
+
+            resp = testapp.get(url)
+            cls.assert_response(resp)
+
+            result_objs = resp.json['objects']
+            assert len(result_objs) == resp.json['num_results'] == \
+                len(expected_objs)
+            map(cls.assert_entity, expected_objs, result_objs)
 
 
 class TestCampusApi(TestCatalogEntityApi):
@@ -134,43 +191,6 @@ class TestCampusApi(TestCatalogEntityApi):
             len(campuses)
         map(self.assert_entity, campuses, objects)
 
-    def test_get_campus_department(self, db, campuses, testapp):
-        campus = campuses[0]
-        department = DepartmentFactory(campus=campus)
-        db.session.commit()
-
-        url = self.base_url \
-                  .ent(campus.id) \
-                  .col('departments') \
-                  .ent(department.id)
-        resp = testapp.get(url)
-        self.assert_response(resp)
-
-        TestDepartmentApi.assert_entity(department, resp.json)
-
-    def test_get_campus_departments(self, db, campuses, testapp):
-        campus = campuses[0]
-        departments = [
-            DepartmentFactory(campus=campus),
-            DepartmentFactory(campus=campus),
-            DepartmentFactory(campus=campus),
-        ]
-        db.session.commit()
-
-        url = self.base_url \
-                  .ent(campus.id) \
-                  .col('departments')
-        resp = testapp.get(url)
-        self.assert_response(resp)
-
-        departments = sorted(departments, key=lambda d: d.id)
-
-        objects = resp.json['objects']
-        assert len(objects) == \
-            resp.json['num_results'] == \
-            len(departments)
-        map(TestDepartmentApi.assert_entity, departments, objects)
-
 
 class TestDepartmentApi(TestCatalogEntityApi):
 
@@ -182,20 +202,9 @@ class TestDepartmentApi(TestCatalogEntityApi):
         assert json['name'] == entity.name
         assert json['campus_id'] == entity.campus_id
 
-    def test_get_department(self, departments, testapp):
+    def test_get_department(self, campuses, departments, testapp):
         department = departments[0]
-        resp = testapp.get(self.base_url.entity(department.id))
-        self.assert_response(resp)
+        self.entity_test_under_campuses(campuses, department, testapp)
 
-        self.assert_entity(department, resp.json)
-
-    def test_get_departments(self, departments, testapp):
-        resp = testapp.get(self.base_url)
-        self.assert_response(resp)
-
-        departments = sorted(departments, key=lambda d: d.id)
-
-        objects = resp.json['objects']
-        assert len(objects) == resp.json['num_results'] == \
-            len(departments)
-        map(self.assert_entity, departments, objects)
+    def test_get_departments(self, campuses, departments, testapp):
+        self.collection_test_under_campuses(campuses, departments, testapp)
