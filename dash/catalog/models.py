@@ -98,6 +98,14 @@ class Course(CatalogEntity):
     def name(self):
         return Subject.name
 
+    @hybrid_property
+    def subject_code(self):
+        return self.subject.code
+
+    @subject_code.expression
+    def subject_code(self):
+        return Subject.code
+
     __mapper_args__ = {
         'polymorphic_on': type,
         'with_polymorphic': '*',

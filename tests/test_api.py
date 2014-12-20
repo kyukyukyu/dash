@@ -7,6 +7,7 @@ from six import text_type as unicode
 from six.moves.urllib import parse
 from functools import reduce
 from dash.compat import UnicodeMixin
+from dash.catalog.models import GeneralCourse, MajorCourse
 
 
 class Url(UnicodeMixin):
@@ -208,3 +209,131 @@ class TestDepartmentApi(TestCatalogEntityApi):
 
     def test_get_departments(self, campuses, departments, testapp):
         self.collection_test_under_campuses(campuses, departments, testapp)
+
+
+class TestSubjectApi(TestCatalogEntityApi):
+    base_url = Url('subjects', prefix="/api")   # "/api/subjects"
+
+    @classmethod
+    def assert_entity(cls, entity, json):
+        super(TestSubjectApi, cls).assert_entity(entity, json)
+        assert json['name'] == entity.name
+
+    def test_get_subject(self, subjects, testapp):
+        subject = subjects[0]
+        resp = testapp.get(self.base_url.entity(subject.id))
+        self.assert_response(resp)
+
+        self.assert_entity(subject, resp.json)
+
+    def test_get_subjects(self, subjects, testapp):
+        resp = testapp.get(self.base_url)
+        self.assert_response(resp)
+
+        subjects = sorted(subjects, key=lambda s: s.id)
+
+        objects = resp.json['objects']
+        assert len(objects) == resp.json['num_results'] == \
+            len(subjects)
+        map(self.assert_entity, subjects, objects)
+
+
+class TestCourseApi(TestCatalogEntityApi):
+
+    base_url = Url('courses', prefix="/api")   # "/api/courses"
+
+    @classmethod
+    def assert_entity(cls, entity, json):
+        super(TestCourseApi, cls).assert_entity(entity, json)
+        assert json['instructor'] == entity.instructor
+        assert json['credit'] == entity.credit
+        assert json['subject_id'] == entity.subject_id
+        TestSubjectApi.assert_entity(entity.subject, json['subject'])
+        assert json['department_id'] == entity.department_id
+        TestDepartmentApi.assert_entity(entity.department, json['department'])
+        for expected_hour, result_hour in zip(entity.hours, json['hours']):
+            assert result_hour['id'] == expected_hour.id
+            assert result_hour['day_of_week'] == expected_hour.day_of_week
+            assert result_hour['start_time'] == expected_hour.start_time
+            assert result_hour['end_time'] == expected_hour.end_time
+
+        if isinstance(entity, GeneralCourse):
+            assert json['category_id'] == entity.category_id
+            "TestGenEduCategoryApi.assert_entity(entity.category, json['category']"
+        elif isinstance(entity, MajorCourse):
+            assert json['target_grade'] == entity.target_grade
+
+    def test_get_course(self, campuses, courses, testapp):
+        course = courses[0]
+        self.entity_test_under_campuses(campuses, course, testapp)
+
+    def test_get_courses(self, campuses, courses, testapp):
+        self.collection_test_under_campuses(campuses, courses, testapp)
+
+    @pytest.mark.parametrize("name,codes_from_name", [
+        ("understanding",
+         frozenset(["10037", "15254", "15002", "11543", "11970", "22294",
+                    "22361", "20025"])),
+        (None, None),
+    ])
+    @pytest.mark.parametrize("subject_code,codes_from_subject_code", [
+        ("GEN6006", frozenset(["10037", "15254"])),
+        (None, None),
+    ])
+    @pytest.mark.parametrize("instructor,codes_from_instructor", [
+        ("Sunny Yoon", frozenset(["15254", "11552", "12798"])),
+        (None, None),
+    ])
+    @pytest.mark.parametrize("course_type,category_id,target_grade,"
+                             "department_id,codes_from_options", [
+        ("general", 1, None, None, frozenset(["15254"])),
+        ("general", None, None, None, frozenset(["15254", "15002", "20025",
+                                                 "20016"])),
+        ("major", None, 3, 1, frozenset(["10037"])),
+        ("major", None, 3, None, frozenset(["10037", "11552", "11543",
+                                            "22294", "22291"])),
+        ("major", None, None, 1, frozenset(["10037", "11615"])),
+        ("major", None, None, None, frozenset(["10037", "11615", "11552",
+                                               "11543", "12798", "11970",
+                                               "22294", "22361", "22291"])),
+        (None, None, None, None, None),
+    ])
+    def test_search_courses(
+            self, campuses, courses, testapp,
+            name, codes_from_name,
+            subject_code, codes_from_subject_code,
+            instructor, codes_from_instructor,
+            course_type, category_id, target_grade,
+            department_id, codes_from_options,
+    ):
+        selected_course_codes_all = set(c.code for c in courses)
+        for code_set in (codes_from_name, codes_from_subject_code,
+                         codes_from_instructor, codes_from_options):
+            if code_set is None:
+                continue
+            selected_course_codes_all = selected_course_codes_all & code_set
+        selected_courses_all = list(c for c in courses
+                                    if c.code in selected_course_codes_all)
+
+        def process_search_options(url):
+            if name:
+                url = url.query(name=name)
+            if subject_code:
+                url = url.query(subject_code=subject_code)
+            if instructor:
+                url = url.query(instructor=instructor)
+            if course_type:
+                url = url.query({'type': course_type})
+            if category_id:
+                url = url.query(category_id=category_id)
+            if target_grade:
+                url = url.query(target_grade=target_grade)
+            if department_id:
+                url = url.query(department_id=department_id)
+
+            return url
+
+        self.collection_test_under_campuses(
+            campuses, selected_courses_all, testapp,
+            url_processors=[process_search_options],
+            )
