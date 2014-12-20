@@ -207,6 +207,19 @@ class SubjectList(SubjectMixin, Collection):
     pass
 
 
+class GenEduCategoryMixin(object):
+    model = models.GenEduCategory
+    fields = gen_edu_category_fields
+
+
+class GenEduCategory(GenEduCategoryMixin, Entity):
+    pass
+
+
+class GenEduCategoryList(GenEduCategoryMixin, Collection):
+    pass
+
+
 qp_course_campus_id = lambda q, v: q.join(CourseMixin.model.department) \
     .filter(models.Department.campus_id == v)
 
@@ -300,6 +313,8 @@ api.add_resource(DepartmentList,
                  '/campuses/<int:campus_id>/departments')
 api.add_resource(Subject, '/subjects/<int:id>')
 api.add_resource(SubjectList, '/subjects')
+api.add_resource(GenEduCategory, '/gen_edu_categories/<int:id>')
+api.add_resource(GenEduCategoryList, '/gen_edu_categories')
 api.add_resource(Course,
                  '/courses/<int:id>',
                  '/campuses/<int:campus_id>/courses/<int:id>')

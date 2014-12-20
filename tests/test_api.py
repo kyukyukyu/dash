@@ -238,6 +238,34 @@ class TestSubjectApi(TestCatalogEntityApi):
         map(self.assert_entity, subjects, objects)
 
 
+class TestGenEduCategoryApi(TestCatalogEntityApi):
+
+    base_url = Url('gen_edu_categories', prefix="/api")
+
+    @classmethod
+    def assert_entity(cls, entity, json):
+        super(TestGenEduCategoryApi, cls).assert_entity(entity, json)
+        assert json['name'] == entity.name
+
+    def test_get_category(self, gen_edu_categories, testapp):
+        category = gen_edu_categories[0]
+        resp = testapp.get(self.base_url.ent(category.id))
+        self.assert_response(resp)
+
+        self.assert_entity(category, resp.json)
+
+    def test_get_categories(self, gen_edu_categories, testapp):
+        resp = testapp.get(self.base_url)
+        self.assert_response(resp)
+
+        gen_edu_categories = sorted(gen_edu_categories, key=lambda c: c.id)
+
+        objects = resp.json['objects']
+        assert len(objects) == resp.json['num_results'] == \
+               len(gen_edu_categories)
+        map(self.assert_entity, gen_edu_categories, objects)
+
+
 class TestCourseApi(TestCatalogEntityApi):
 
     base_url = Url('courses', prefix="/api")   # "/api/courses"
@@ -259,7 +287,8 @@ class TestCourseApi(TestCatalogEntityApi):
 
         if isinstance(entity, GeneralCourse):
             assert json['category_id'] == entity.category_id
-            "TestGenEduCategoryApi.assert_entity(entity.category, json['category']"
+            TestGenEduCategoryApi.assert_entity(entity.category,
+                                                json['category'])
         elif isinstance(entity, MajorCourse):
             assert json['target_grade'] == entity.target_grade
 
