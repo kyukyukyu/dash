@@ -75,9 +75,15 @@ class Course(CatalogEntity):
     subject_id = ReferenceCol('subjects')
     subject = relationship('Subject',
                            backref=db.backref('courses', lazy='dynamic'),
+                           lazy='joined',
+                           innerjoin=True,
                            )
     department_id = ReferenceCol('departments')
-    department = relationship('Department', backref='courses')
+    department = relationship('Department',
+                              backref=db.backref('courses', lazy='dynamic'),
+                              lazy='joined',
+                              innerjoin=True,
+                              )
     campus = relationship('Campus',
                           uselist=False,
                           secondary=Department.__table__,
@@ -115,6 +121,7 @@ class GeneralCourse(Course):
     category_id = ReferenceCol('gen_edu_categories')
     category = relationship('GenEduCategory',
                             backref=db.backref('courses', lazy='dynamic'),
+                            lazy='joined',
                             )
 
     TYPE = 'general'
@@ -156,6 +163,7 @@ class CourseHour(SurrogatePK, Model, CreatedAtMixin):
         backref=db.backref(
             'hours',
             order_by='CourseHour.day_of_week, CourseHour.start_time',
+            lazy='joined',
         ),
         )
 
