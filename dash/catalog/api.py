@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 from functools import wraps
-from flask import Blueprint, render_template
 from collections import Mapping
 from six import iteritems
+from sqlalchemy.orm.exc import NoResultFound
+from flask import Blueprint, render_template, abort
 from flask.ext.login import login_required
 from flask.ext.restful import (
     Resource,
@@ -64,8 +65,11 @@ class Entity(ResourceWithQuery):
     def get(self, **kwargs):
         id = kwargs['id']
         id_column = self.model.id
-        entity = self.query(**kwargs).filter(id_column == id).one()
-        return self.marshal(entity), 200
+        try:
+            entity = self.query(**kwargs).filter(id_column == id).one()
+            return self.marshal(entity), 200
+        except NoResultFound:
+            abort(404)
 
 
 class Collection(ResourceWithQuery):
