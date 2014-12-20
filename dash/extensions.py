@@ -9,8 +9,8 @@ bcrypt = Bcrypt()
 from flask.ext.login import LoginManager
 login_manager = LoginManager()
 
-from flask.ext.sqlalchemy import SQLAlchemy
-db = SQLAlchemy()
+from flask.ext.sqlalchemy import SQLAlchemy, BaseQuery
+db = SQLAlchemy(session_options={'query_cls': BaseQuery})
 
 from flask.ext.migrate import Migrate
 migrate = Migrate()

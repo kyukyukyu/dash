@@ -12,6 +12,7 @@ from flask.ext.restful import (
 )
 
 from dash.catalog import models
+from dash.database import db
 from dash.extensions import api
 
 
@@ -52,14 +53,19 @@ class ResourceWithQuery(Resource):
 
     @classmethod
     def query(cls, **kwargs):
-        return cls.model.query
+        return db.session.query(cls.model)
+
+    @classmethod
+    def marshal(cls, data):
+        return marshal(data, cls.fields)
 
 
 class Entity(ResourceWithQuery):
     def get(self, **kwargs):
         id = kwargs['id']
-        entity = self.query(**kwargs).filter_by(id=id).one()
-        return marshal(entity, self.fields), 200
+        id_column = self.model.id
+        entity = self.query(**kwargs).filter(id_column == id).one()
+        return self.marshal(entity), 200
 
 
 class Collection(ResourceWithQuery):
@@ -77,7 +83,7 @@ class Collection(ResourceWithQuery):
             per_page=args.get('results_per_page') or 20,
         )
 
-        ret_objects = marshal(pagination.items, self.fields)
+        ret_objects = [self.marshal(item) for item in pagination.items]
         return {
             'num_results': pagination.total,
             'page': page,
@@ -115,7 +121,7 @@ def when(variable, query_processor, **query_processors):
                 return query
             return wrapper
 
-        cls.query = query_decorator(cls.query)
+        cls.query = classmethod(query_decorator(cls.query))
         return cls
 
     return decorator
