@@ -73,6 +73,10 @@ class Collection(ResourceWithQuery):
     parser.add_argument('page', type=int)
     parser.add_argument('results_per_page', type=int)
 
+    @classmethod
+    def query(cls, **kwargs):
+        return super(Collection, cls).query(**kwargs).order_by(cls.model.id)
+
     def get(self, **kwargs):
         args = self.parser.parse_args()
         page = args.get('page') or 1

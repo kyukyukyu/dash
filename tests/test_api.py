@@ -126,6 +126,8 @@ class TestCampusApi(TestCatalogEntityApi):
         resp = testapp.get(self.base_url)
         self.assert_response(resp)
 
+        campuses = sorted(campuses, key=lambda c: c.id)
+
         objects = resp.json['objects']
         assert len(objects) == \
             resp.json['num_results'] == \
@@ -161,6 +163,8 @@ class TestCampusApi(TestCatalogEntityApi):
         resp = testapp.get(url)
         self.assert_response(resp)
 
+        departments = sorted(departments, key=lambda d: d.id)
+
         objects = resp.json['objects']
         assert len(objects) == \
             resp.json['num_results'] == \
@@ -188,6 +192,8 @@ class TestDepartmentApi(TestCatalogEntityApi):
     def test_get_departments(self, departments, testapp):
         resp = testapp.get(self.base_url)
         self.assert_response(resp)
+
+        departments = sorted(departments, key=lambda d: d.id)
 
         objects = resp.json['objects']
         assert len(objects) == resp.json['num_results'] == \
