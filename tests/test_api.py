@@ -285,6 +285,7 @@ class TestCourseApi(TestCatalogEntityApi):
             assert result_hour['start_time'] == expected_hour.start_time
             assert result_hour['end_time'] == expected_hour.end_time
 
+        assert json['type'] == entity.type
         if isinstance(entity, GeneralCourse):
             assert json['category_id'] == entity.category_id
             TestGenEduCategoryApi.assert_entity(entity.category,
