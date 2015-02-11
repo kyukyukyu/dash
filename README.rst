@@ -2,6 +2,9 @@
 Dash
 ===============================
 
+.. image:: https://travis-ci.org/kyukyukyu/dash.svg?branch=master
+    :target: https://travis-ci.org/kyukyukyu/dash
+
 A web app that lets students lay out their own timetables in easy and fast way.
 
 
