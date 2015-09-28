@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import numbers
 from factory import (
     LazyAttribute,
     PostGenerationMethodCall,
@@ -69,7 +70,6 @@ class CourseFactory(BaseFactory):
     instructor = FuzzyText(length=10)
     credit = FuzzyFloat(1.0, 6.0)
     subject = SubFactory(SubjectFactory)
-    department = SubFactory(DepartmentFactory)
 
     @post_generation
     def hours(self, create, extracted, **kwargs):
@@ -81,6 +81,32 @@ class CourseFactory(BaseFactory):
                 _hours.append(c_h)
 
         return _hours
+
+    @post_generation
+    def departments(obj, create, extracted, **kwargs):
+        _departments = []
+
+        if extracted is None:
+            extracted = 2
+
+        if isinstance(extracted, numbers.Integral):
+            # Create department entities of given number.
+            i = extracted
+            while i > 0:
+                if create:
+                    department = DepartmentFactory.create()
+                else:
+                    department = DepartmentFactory.build()
+                _departments.append(department)
+                i -= 1
+        else:
+            # Link given departments to this course entity.
+            _departments[:] = extracted
+
+        for d in _departments:
+            d.courses.append(obj)
+
+        return _departments
 
 
 class GenEduCategoryFactory(BaseFactory):

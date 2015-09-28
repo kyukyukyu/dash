@@ -60,8 +60,7 @@ course_fields = extend(entity_fields, {
     'credit': fields.Float,
     'subject_id': fields.Integer,
     'subject': fields.Nested(subject_fields),
-    'department_id': fields.Integer,
-    'department': fields.Nested(department_fields),
+    'departments': fields.List(fields.Nested(department_fields)),
     'hours': fields.List(fields.Nested(course_hour_fields)),
 })
 
@@ -220,8 +219,13 @@ class GenEduCategoryList(GenEduCategoryMixin, Collection):
     pass
 
 
-qp_course_campus_id = lambda q, v: q.join(CourseMixin.model.department) \
-    .filter(models.Department.campus_id == v)
+def qp_course_campus_id(q, v):
+    """Query postprocessor for Course objects when campus_id is given.
+
+    :param q: Query to manipulate.
+    :param v: Value used for filtering.
+    """
+    return q.filter(models.Department.campus_id == v)
 
 
 class CourseMixin(ResourceWithQuery):
@@ -243,7 +247,10 @@ class CourseMixin(ResourceWithQuery):
     def query(cls, **kwargs):
         return super(CourseMixin, cls).query(**kwargs) \
             .join(cls.model.subject) \
-            .options(db.contains_eager(cls.model.subject))
+            .options(db.contains_eager(cls.model.subject)) \
+            .join(*models.Course.departments.attr) \
+            .options(db.contains_eager(cls.model.department_courses)
+                       .contains_eager(models.DepartmentCourse.department))
 
     @classmethod
     def marshal(cls, data):
@@ -276,7 +283,7 @@ class CourseList(CourseMixin, Collection):
         entity = cls.model
         args = cls.parser.parse_args()
 
-        attrs_for_eq = []
+        attrs_for_eq = [('department_id', models.Department.id)]
         course_type = args.get('type')
         if course_type == 'general':
             q = q.filter(entity.type == models.GeneralCourse.TYPE)
@@ -286,7 +293,6 @@ class CourseList(CourseMixin, Collection):
         elif course_type == 'major':
             q = q.filter(entity.type == models.MajorCourse.TYPE)
             attrs_for_eq.extend([
-                ('department_id', entity.MajorCourse.department_id),
                 ('target_grade', entity.MajorCourse.target_grade),
             ])
 

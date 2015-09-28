@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.hybrid import hybrid_property
 from dash.database import (
     Column,
@@ -44,11 +45,30 @@ class Campus(CatalogEntity):
         return '<Campus({name})>'.format(name=self.name)
 
 
+class DepartmentCourse(db.Model):
+    """Association object class between Department and Course object.
+    """
+    __tablename__ = 'department_course'
+    department_id = Column(db.Integer, db.ForeignKey('departments.id'), primary_key=True)
+    course_id = Column(db.Integer, db.ForeignKey('courses.id'), primary_key=True)
+    department = relationship('Department', backref=db.backref('department_courses', cascade='all, delete-orphan'))
+    course = relationship('Course', backref='department_courses')
+
+    def __init__(self, obj):
+        if isinstance(obj, Department):
+            self.department = obj
+        elif isinstance(obj, Course):
+            self.course = obj
+        else:
+            raise TypeError('obj should be either Course or Department type')
+
+
 class Department(CatalogEntity):
     name = Column(db.String(80), unique=False, nullable=False)
     __tablename__ = 'departments'
     campus_id = ReferenceCol('campuses')
     campus = relationship('Campus', backref='departments')
+    courses = association_proxy('department_courses', 'course')
 
     def __repr__(self):
         return '<Department({name})>'.format(name=self.name)
@@ -78,17 +98,7 @@ class Course(CatalogEntity):
                            lazy='joined',
                            innerjoin=True,
                            )
-    department_id = ReferenceCol('departments')
-    department = relationship('Department',
-                              backref=db.backref('courses', lazy='dynamic'),
-                              lazy='joined',
-                              innerjoin=True,
-                              )
-    campus = relationship('Campus',
-                          uselist=False,
-                          secondary=Department.__table__,
-                          backref=db.backref('courses', lazy='dynamic'),
-                          )
+    departments = association_proxy('department_courses', 'department')
 
     @hybrid_property
     def name(self):
