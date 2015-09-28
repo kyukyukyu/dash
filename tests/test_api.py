@@ -282,8 +282,8 @@ class TestCourseApi(TestCatalogEntityApi):
         assert json['credit'] == entity.credit
         assert json['subject_id'] == entity.subject_id
         TestSubjectApi.assert_entity(entity.subject, json['subject'])
-        assert json['department_id'] == entity.department_id
-        TestDepartmentApi.assert_entity(entity.department, json['department'])
+        for expected_dept, result_dept in zip(entity.departments, json['departments']):
+            TestDepartmentApi.assert_entity(expected_dept, result_dept)
         for expected_hour, result_hour in zip(entity.hours, json['hours']):
             assert result_hour['id'] == expected_hour.id
             assert result_hour['day_of_week'] == expected_hour.day_of_week
@@ -297,6 +297,11 @@ class TestCourseApi(TestCatalogEntityApi):
                                                 json['category'])
         elif isinstance(entity, MajorCourse):
             assert json['target_grade'] == entity.target_grade
+
+    @staticmethod
+    def entity_test_under_campus(entity, campus):
+        return any(map(lambda d: d.campus_id == campus.id,
+                       entity.departments))
 
     def test_get_course(self, campuses, courses, testapp):
         course = courses[0]
