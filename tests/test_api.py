@@ -114,6 +114,10 @@ class TestCatalogEntityApi(object):
         assert dateutil.parser.parse(json['created_at']) == \
                entity.created_at.replace(microsecond=0)
 
+    @staticmethod
+    def entity_test_under_campus(entity, campus):
+        return entity.campus is campus
+
     @classmethod
     def entity_test_under_campuses(cls, campuses, entity, testapp,
                                    url_processors=[]):
@@ -122,7 +126,7 @@ class TestCatalogEntityApi(object):
             if campus:
                 url = TestCampusApi.base_url.ent(campus.id) \
                     .append(cls.base_url).ent(entity.id)
-                if entity.campus is not campus:
+                if not cls.entity_test_under_campus(entity, campus):
                     should_exist = False
             else:
                 url = cls.base_url.ent(entity.id)
@@ -145,7 +149,8 @@ class TestCatalogEntityApi(object):
             if campus:
                 url = TestCampusApi.base_url.ent(campus.id) \
                     .append(cls.base_url)
-                expected_objs = [o for o in collection if o.campus == campus]
+                expected_objs = [o for o in collection
+                                 if cls.entity_test_under_campus(o, campus)]
             else:
                 url = cls.base_url
                 expected_objs = list(collection)
