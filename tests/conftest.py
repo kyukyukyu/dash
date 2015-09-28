@@ -221,8 +221,8 @@ def courses(db, departments, subjects, gen_edu_categories):
             instructor="Euee S. Jang",
             credit=2.00,
             target_grade=3,
-            subject=subjects[0],        # Understanding Patent Law
-            department=departments[0],  # Major in Computer Engineering
+            subject=subjects[0],            # Understanding Patent Law
+            departments=[departments[0]],   # Major in Computer Engineering
         ),
         GeneralCourseFactory(
             code="15254",
@@ -230,23 +230,23 @@ def courses(db, departments, subjects, gen_edu_categories):
             credit=2.00,
             subject=subjects[0],                # Understanding Patent Law
             category=gen_edu_categories[0],     # Business and Leadership
-            department=departments[7],          # College
+            departments=[departments[7]],       # College
         ),
         MajorCourseFactory(
             code="11552",
             instructor="Sunny Yoon",
             credit=3.00,
             target_grade=3,
-            subject=subjects[1],        # Media Criticism
-            department=departments[5],  # Department of Media Communication
+            subject=subjects[1],            # Media Criticism
+            departments=[departments[5]],   # Department of Media Communication
         ),
         MajorCourseFactory(
             code="12798",
             instructor="Sunny Yoon",
             credit=3.00,
             target_grade=2,
-            subject=subjects[2],        # Visual Culture
-            department=departments[5],  # Department of Media Communication
+            subject=subjects[2],            # Visual Culture
+            departments=[departments[5]],   # Department of Media Communication
         ),
         GeneralCourseFactory(
             code="15002",
@@ -254,59 +254,59 @@ def courses(db, departments, subjects, gen_edu_categories):
             credit=2.00,
             subject=subjects[3],        # Understanding The Chinese Literature
             category=gen_edu_categories[1],     # Liberal Arts
-            department=departments[7],          # College
+            departments=[departments[7]],       # College
         ),
         MajorCourseFactory(
             code="11543",
             instructor="Kim Soochul",
             credit=3.00,
             target_grade=3,
-            subject=subjects[4],        # Understanding Digital Media
-            department=departments[5],  # Department of Media Communication
+            subject=subjects[4],            # Understanding Digital Media
+            departments=[departments[5]],   # Department of Media Communication
         ),
         MajorCourseFactory(
             code="11615",
             instructor="Lee Sang Hwa",
             credit=3.00,
             target_grade=2,
-            subject=subjects[5],        # Signals and Systems
-            department=departments[0],  # Major in Computer Engineering
+            subject=subjects[5],            # Signals and Systems
+            departments=[departments[0]],   # Major in Computer Engineering
         ),
         MajorCourseFactory(
             code="11970",
             instructor="Cho Eun Pa",
             credit=2.00,
             target_grade=1,
-            subject=subjects[6],        # Understanding Literature
-            department=departments[6],  # Department of Korean Language
-                                        # Education
+            subject=subjects[6],            # Understanding Literature
+            departments=[departments[6]],   # Department of Korean Language
+                                            # Education
         ),
         MajorCourseFactory(
             code="22294",
             instructor="Kim, Sang-jean",
             credit=3.00,
             target_grade=3,
-            subject=subjects[7],        # Understanding Classical Poetry
-            department=departments[8],  # Department of Korean Language &
-                                        # Literature
+            subject=subjects[7],            # Understanding Classical Poetry
+            departments=[departments[8]],   # Department of Korean Language &
+                                            # Literature
         ),
         MajorCourseFactory(
             code="22361",
             instructor="Lee, Hee-soo",
             credit=3.00,
             target_grade=4,
-            subject=subjects[8],        # Understanding Middle East and
-                                        # Islamic World
-            department=departments[9],  # Department of Cultural Anthropology
+            subject=subjects[8],            # Understanding Middle East and
+                                            # Islamic World
+            departments=[departments[9]],   # Department of Cultural Anthropology
         ),
         MajorCourseFactory(
             code="22291",
             instructor="Kim, Zong-su",
             credit=3.00,
             target_grade=3,
-            subject=subjects[9],        # Dynamics in the Korean Language
-            department=departments[8],  # Department of Korean Language &
-                                        # Literature
+            subject=subjects[9],            # Dynamics in the Korean Language
+            departments=[departments[8]],   # Department of Korean Language &
+                                            # Literature
         ),
         GeneralCourseFactory(
             code="20025",
@@ -315,7 +315,7 @@ def courses(db, departments, subjects, gen_edu_categories):
             subject=subjects[10],       # Understanding of the Third World
                                         # Culture
             category=gen_edu_categories[2],     # Language and World Culture
-            department=departments[10],         # College
+            departments=[departments[10]],      # College
         ),
         GeneralCourseFactory(
             code="20016",
@@ -324,7 +324,7 @@ def courses(db, departments, subjects, gen_edu_categories):
             subject=subjects[11],       # History of The Earth
             category=gen_edu_categories[3],     # Science Technology and
                                                 # Environment
-            department=departments[10],         # College
+            departments=[departments[10]],      # College
         ),
     ]
 

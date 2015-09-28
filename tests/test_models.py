@@ -188,11 +188,9 @@ class TestCatalog:
             assert bool(course.subject_id)
             assert bool(course.name)
             assert course.name == course.subject.name
-            assert bool(course.department)
-            assert course in course.department.courses
-            assert bool(course.department_id)
-            assert bool(course.campus)
-            assert course in course.campus.courses
+            assert bool(course.departments)
+            for d in course.departments:
+                assert course in d.courses
 
         general_course = GeneralCourseFactory()
         db.session.commit()
