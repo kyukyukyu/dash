@@ -110,7 +110,7 @@ class TestCatalog:
         assert retrieved_category == gen_edu_category
 
         course = GeneralCourse(code='10020', subject=subject, credit=3.0,
-                               department=department)
+                               departments=[department])
         course.category = gen_edu_category
         course.save()
 
@@ -119,7 +119,7 @@ class TestCatalog:
         assert retrieved_course == course
 
         course2 = MajorCourse(code='10020', subject=subject,
-                              department=department, credit=3.0,
+                              departments=[department], credit=3.0,
                               target_grade=3)
         course2.save()
 
