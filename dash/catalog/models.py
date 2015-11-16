@@ -170,8 +170,8 @@ class MajorCourse(Course):
         return '<MajorCourse({code})>'.format(code=self.code)
 
 
-class CourseHour(SurrogatePK, Model, CreatedAtMixin):
-    __tablename__ = 'course_hours'
+class CourseClass(SurrogatePK, Model, CreatedAtMixin):
+    __tablename__ = 'course_classes'
     day_of_week = Column(db.Integer, nullable=False)
     start_time = Column(db.Integer, nullable=False)
     end_time = Column(db.Integer, nullable=False)
@@ -179,23 +179,23 @@ class CourseHour(SurrogatePK, Model, CreatedAtMixin):
     course = relationship(
         'Course',
         backref=db.backref(
-            'hours',
-            order_by='CourseHour.day_of_week, CourseHour.start_time',
+            'classes',
+            order_by='CourseClass.day_of_week, CourseClass.start_time',
             lazy='joined',
         ),
         )
 
     __table_args__ = (
         db.CheckConstraint('day_of_week >= 0 AND day_of_week < 7',
-                           name='ck_course_hours_day_of_week'),
+                           name='ck_course_classes_day_of_week'),
         db.CheckConstraint('start_time >= 0 AND end_time >= 0 AND '
                            'start_time <= end_time',
-                           name='ck_course_hours_start_end_time'),
+                           name='ck_course_classes_start_end_time'),
     )
 
     def conflicts_with(self, h):
-        if not isinstance(h, CourseHour):
-            raise TypeError('h should be a CourseHour object')
+        if not isinstance(h, CourseClass):
+            raise TypeError('h should be a CourseClass object')
 
         return (
             self.day_of_week == h.day_of_week and (
@@ -205,7 +205,7 @@ class CourseHour(SurrogatePK, Model, CreatedAtMixin):
         )
 
     def __repr__(self):
-        return '<CourseHour({day_of_week}, {start_time}, {end_time})>' \
+        return '<CourseClass({day_of_week}, {start_time}, {end_time})>' \
             .format(day_of_week=self.day_of_week,
                     start_time=self.start_time,
                     end_time=self.end_time,

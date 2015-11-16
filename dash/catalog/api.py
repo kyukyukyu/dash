@@ -47,7 +47,7 @@ subject_fields = extend(entity_fields, {
     'name': fields.String,
 })
 
-course_hour_fields = {
+course_class_fields = {
     'id': fields.Integer,
     'day_of_week': fields.Integer,
     'start_time': fields.Integer,
@@ -61,7 +61,7 @@ course_fields = extend(entity_fields, {
     'subject_id': fields.Integer,
     'subject': fields.Nested(subject_fields),
     'departments': fields.List(fields.Nested(department_fields)),
-    'hours': fields.List(fields.Nested(course_hour_fields)),
+    'classes': fields.List(fields.Nested(course_class_fields)),
 })
 
 gen_edu_category_fields = extend(entity_fields, {

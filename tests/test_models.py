@@ -13,7 +13,7 @@ from dash.catalog.models import (
     GenEduCategory,
     GeneralCourse,
     MajorCourse,
-    CourseHour,
+    CourseClass,
 )
 from .factories import (
     UserFactory,
@@ -23,7 +23,7 @@ from .factories import (
     GenEduCategoryFactory,
     GeneralCourseFactory,
     MajorCourseFactory,
-    CourseHourFactory,
+    CourseClassFactory,
 )
 
 
@@ -127,26 +127,26 @@ class TestCatalog:
         assert isinstance(retrieved_course, MajorCourse)
         assert retrieved_course == course2
 
-        course_hour = CourseHour(day_of_week=2, start_time=14, end_time=17,
-                                 course=course)
-        course_hour.save()
+        course_class = CourseClass(day_of_week=2, start_time=14, end_time=17,
+                                   course=course)
+        course_class.save()
 
-        retrieved_course_hour = CourseHour.get_by_id(course_hour.id)
-        assert retrieved_course_hour == course_hour
+        retrieved_course_class = CourseClass.get_by_id(course_class.id)
+        assert retrieved_course_class == course_class
 
-    def test_course_hour_conflicts_with(self):
-        c_h1 = CourseHourFactory(day_of_week=1, start_time=2, end_time=5)
-        c_h2 = CourseHourFactory(day_of_week=1, start_time=4, end_time=10)
-        c_h3 = CourseHourFactory(day_of_week=1, start_time=6, end_time=9)
-        c_h4 = CourseHourFactory(day_of_week=2, start_time=6, end_time=9)
+    def test_course_class_conflicts_with(self):
+        c_c1 = CourseClassFactory(day_of_week=1, start_time=2, end_time=5)
+        c_c2 = CourseClassFactory(day_of_week=1, start_time=4, end_time=10)
+        c_c3 = CourseClassFactory(day_of_week=1, start_time=6, end_time=9)
+        c_c4 = CourseClassFactory(day_of_week=2, start_time=6, end_time=9)
 
-        assert c_h1.conflicts_with(c_h2) and c_h2.conflicts_with(c_h1)
-        assert not c_h1.conflicts_with(c_h3) and not c_h3.conflicts_with(c_h1)
-        assert c_h2.conflicts_with(c_h3) and c_h3.conflicts_with(c_h2)
+        assert c_c1.conflicts_with(c_c2) and c_c2.conflicts_with(c_c1)
+        assert not c_c1.conflicts_with(c_c3) and not c_c3.conflicts_with(c_c1)
+        assert c_c2.conflicts_with(c_c3) and c_c3.conflicts_with(c_c2)
         assert all((
-            not c_h1.conflicts_with(c_h4) and not c_h4.conflicts_with(c_h1),
-            not c_h2.conflicts_with(c_h4) and not c_h4.conflicts_with(c_h2),
-            not c_h3.conflicts_with(c_h4) and not c_h4.conflicts_with(c_h3),
+            not c_c1.conflicts_with(c_c4) and not c_c4.conflicts_with(c_c1),
+            not c_c2.conflicts_with(c_c4) and not c_c4.conflicts_with(c_c2),
+            not c_c3.conflicts_with(c_c4) and not c_c4.conflicts_with(c_c3),
         ))
 
     def test_factory(self, db):
@@ -204,12 +204,12 @@ class TestCatalog:
         assert_course(major_course)
         assert bool(major_course.target_grade)
 
-        course_hour = CourseHourFactory()
+        course_class = CourseClassFactory()
         db.session.commit()
-        assert bool(course_hour.created_at)
-        assert 0 <= course_hour.day_of_week < 7
-        assert course_hour.start_time >= 0
-        assert course_hour.end_time >= 0
-        assert bool(course_hour.course)
-        assert course_hour in course_hour.course.hours
-        assert bool(course_hour.course_id)
+        assert bool(course_class.created_at)
+        assert 0 <= course_class.day_of_week < 7
+        assert course_class.start_time >= 0
+        assert course_class.end_time >= 0
+        assert bool(course_class.course)
+        assert course_class in course_class.course.classes
+        assert bool(course_class.course_id)

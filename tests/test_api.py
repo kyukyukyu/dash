@@ -284,11 +284,11 @@ class TestCourseApi(TestCatalogEntityApi):
         TestSubjectApi.assert_entity(entity.subject, json['subject'])
         for expected_dept, result_dept in zip(entity.departments, json['departments']):
             TestDepartmentApi.assert_entity(expected_dept, result_dept)
-        for expected_hour, result_hour in zip(entity.hours, json['hours']):
-            assert result_hour['id'] == expected_hour.id
-            assert result_hour['day_of_week'] == expected_hour.day_of_week
-            assert result_hour['start_time'] == expected_hour.start_time
-            assert result_hour['end_time'] == expected_hour.end_time
+        for expected_class, result_class in zip(entity.classes, json['classes']):
+            assert result_class['id'] == expected_class.id
+            assert result_class['day_of_week'] == expected_class.day_of_week
+            assert result_class['start_time'] == expected_class.start_time
+            assert result_class['end_time'] == expected_class.end_time
 
         assert json['type'] == entity.type
         if isinstance(entity, GeneralCourse):
