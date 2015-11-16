@@ -50,8 +50,8 @@ subject_fields = extend(entity_fields, {
 course_class_fields = {
     'id': fields.Integer,
     'day_of_week': fields.Integer,
-    'start_time': fields.Integer,
-    'end_time': fields.Integer,
+    'start_period': fields.Integer,
+    'end_period': fields.Integer,
 }
 
 course_fields = extend(entity_fields, {

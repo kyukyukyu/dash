@@ -173,14 +173,14 @@ class MajorCourse(Course):
 class CourseClass(SurrogatePK, Model, CreatedAtMixin):
     __tablename__ = 'course_classes'
     day_of_week = Column(db.Integer, nullable=False)
-    start_time = Column(db.Integer, nullable=False)
-    end_time = Column(db.Integer, nullable=False)
+    start_period = Column(db.Integer, nullable=False)
+    end_period = Column(db.Integer, nullable=False)
     course_id = ReferenceCol('courses')
     course = relationship(
         'Course',
         backref=db.backref(
             'classes',
-            order_by='CourseClass.day_of_week, CourseClass.start_time',
+            order_by='CourseClass.day_of_week, CourseClass.start_period',
             lazy='joined',
         ),
         )
@@ -188,9 +188,9 @@ class CourseClass(SurrogatePK, Model, CreatedAtMixin):
     __table_args__ = (
         db.CheckConstraint('day_of_week >= 0 AND day_of_week < 7',
                            name='ck_course_classes_day_of_week'),
-        db.CheckConstraint('start_time >= 0 AND end_time >= 0 AND '
-                           'start_time <= end_time',
-                           name='ck_course_classes_start_end_time'),
+        db.CheckConstraint('start_period >= 0 AND end_period >= 0 AND '
+                           'start_period <= end_period',
+                           name='ck_course_classes_start_end_period'),
     )
 
     def conflicts_with(self, h):
@@ -199,14 +199,14 @@ class CourseClass(SurrogatePK, Model, CreatedAtMixin):
 
         return (
             self.day_of_week == h.day_of_week and (
-                self.start_time <= h.end_time and
-                self.end_time >= h.start_time
+                self.start_period <= h.end_period and
+                self.end_period >= h.start_period
             )
         )
 
     def __repr__(self):
-        return '<CourseClass({day_of_week}, {start_time}, {end_time})>' \
+        return '<CourseClass({day_of_week}, {start_period}, {end_period})>' \
             .format(day_of_week=self.day_of_week,
-                    start_time=self.start_time,
-                    end_time=self.end_time,
+                    start_period=self.start_period,
+                    end_period=self.end_period,
                     )

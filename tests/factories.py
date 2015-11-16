@@ -133,8 +133,8 @@ class MajorCourseFactory(CourseFactory):
 
 class CourseClassFactory(BaseFactory):
     day_of_week = FuzzyInteger(0, 6)
-    start_time = FuzzyInteger(1, 8)
-    end_time = LazyAttribute(lambda o: o.start_time + 3)
+    start_period = FuzzyInteger(1, 8)
+    end_period = LazyAttribute(lambda o: o.start_period + 3)
     course = SubFactory(MajorCourseFactory)
 
     class Meta:

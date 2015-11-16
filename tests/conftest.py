@@ -331,146 +331,146 @@ def courses(db, departments, subjects, gen_edu_categories):
     c = _courses[0]
     CourseClassFactory(
         day_of_week=1,
-        start_time=5,
-        end_time=8,
+        start_period=5,
+        end_period=8,
         course=c,
     )
 
     c = _courses[1]
     CourseClassFactory(
         day_of_week=3,
-        start_time=17,
-        end_time=20,
+        start_period=17,
+        end_period=20,
         course=c,
     )
 
     c = _courses[2]
     CourseClassFactory(
         day_of_week=2,
-        start_time=11,
-        end_time=13,
+        start_period=11,
+        end_period=13,
         course=c,
     )
     CourseClassFactory(
         day_of_week=4,
-        start_time=11,
-        end_time=13,
+        start_period=11,
+        end_period=13,
         course=c,
     )
 
     c = _courses[3]
     CourseClassFactory(
         day_of_week=2,
-        start_time=15,
-        end_time=17,
+        start_period=15,
+        end_period=17,
         course=c,
     )
     CourseClassFactory(
         day_of_week=4,
-        start_time=15,
-        end_time=17,
+        start_period=15,
+        end_period=17,
         course=c,
     )
 
     c = _courses[4]
     CourseClassFactory(
         day_of_week=3,
-        start_time=15,
-        end_time=18,
+        start_period=15,
+        end_period=18,
         course=c,
     )
 
     c = _courses[5]
     CourseClassFactory(
         day_of_week=0,
-        start_time=13,
-        end_time=15,
+        start_period=13,
+        end_period=15,
         course=c,
     )
     CourseClassFactory(
         day_of_week=0,
-        start_time=16,
-        end_time=18,
+        start_period=16,
+        end_period=18,
         course=c,
     )
 
     c = _courses[6]
     CourseClassFactory(
         day_of_week=1,
-        start_time=11,
-        end_time=13,
+        start_period=11,
+        end_period=13,
         course=c,
     )
     CourseClassFactory(
         day_of_week=3,
-        start_time=3,
-        end_time=5,
+        start_period=3,
+        end_period=5,
         course=c,
     )
 
     c = _courses[7]
     CourseClassFactory(
         day_of_week=0,
-        start_time=11,
-        end_time=14,
+        start_period=11,
+        end_period=14,
         course=c,
     )
 
     c = _courses[8]
     CourseClassFactory(
         day_of_week=0,
-        start_time=10,
-        end_time=12,
+        start_period=10,
+        end_period=12,
         course=c,
     )
     CourseClassFactory(
         day_of_week=1,
-        start_time=4,
-        end_time=6,
+        start_period=4,
+        end_period=6,
         course=c,
     )
 
     c = _courses[9]
     CourseClassFactory(
         day_of_week=1,
-        start_time=16,
-        end_time=18,
+        start_period=16,
+        end_period=18,
         course=c,
     )
     CourseClassFactory(
         day_of_week=3,
-        start_time=6,
-        end_time=8,
+        start_period=6,
+        end_period=8,
         course=c,
     )
 
     c = _courses[10]
     CourseClassFactory(
         day_of_week=3,
-        start_time=5,
-        end_time=7,
+        start_period=5,
+        end_period=7,
         course=c,
     )
     CourseClassFactory(
         day_of_week=3,
-        start_time=8,
-        end_time=10,
+        start_period=8,
+        end_period=10,
         course=c,
     )
 
     c = _courses[11]
     CourseClassFactory(
         day_of_week=3,
-        start_time=15,
-        end_time=18,
+        start_period=15,
+        end_period=18,
         course=c,
     )
 
     c = _courses[12]
     CourseClassFactory(
         day_of_week=2,
-        start_time=5,
-        end_time=8,
+        start_period=5,
+        end_period=8,
         course=c,
     )
 

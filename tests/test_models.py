@@ -127,18 +127,18 @@ class TestCatalog:
         assert isinstance(retrieved_course, MajorCourse)
         assert retrieved_course == course2
 
-        course_class = CourseClass(day_of_week=2, start_time=14, end_time=17,
-                                   course=course)
+        course_class = CourseClass(day_of_week=2, start_period=14,
+                                   end_period=17, course=course)
         course_class.save()
 
         retrieved_course_class = CourseClass.get_by_id(course_class.id)
         assert retrieved_course_class == course_class
 
     def test_course_class_conflicts_with(self):
-        c_c1 = CourseClassFactory(day_of_week=1, start_time=2, end_time=5)
-        c_c2 = CourseClassFactory(day_of_week=1, start_time=4, end_time=10)
-        c_c3 = CourseClassFactory(day_of_week=1, start_time=6, end_time=9)
-        c_c4 = CourseClassFactory(day_of_week=2, start_time=6, end_time=9)
+        c_c1 = CourseClassFactory(day_of_week=1, start_period=2, end_period=5)
+        c_c2 = CourseClassFactory(day_of_week=1, start_period=4, end_period=10)
+        c_c3 = CourseClassFactory(day_of_week=1, start_period=6, end_period=9)
+        c_c4 = CourseClassFactory(day_of_week=2, start_period=6, end_period=9)
 
         assert c_c1.conflicts_with(c_c2) and c_c2.conflicts_with(c_c1)
         assert not c_c1.conflicts_with(c_c3) and not c_c3.conflicts_with(c_c1)
@@ -208,8 +208,8 @@ class TestCatalog:
         db.session.commit()
         assert bool(course_class.created_at)
         assert 0 <= course_class.day_of_week < 7
-        assert course_class.start_time >= 0
-        assert course_class.end_time >= 0
+        assert course_class.start_period >= 0
+        assert course_class.end_period >= 0
         assert bool(course_class.course)
         assert course_class in course_class.course.classes
         assert bool(course_class.course_id)

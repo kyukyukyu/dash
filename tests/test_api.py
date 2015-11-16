@@ -287,8 +287,8 @@ class TestCourseApi(TestCatalogEntityApi):
         for expected_class, result_class in zip(entity.classes, json['classes']):
             assert result_class['id'] == expected_class.id
             assert result_class['day_of_week'] == expected_class.day_of_week
-            assert result_class['start_time'] == expected_class.start_time
-            assert result_class['end_time'] == expected_class.end_time
+            assert result_class['start_period'] == expected_class.start_period
+            assert result_class['end_period'] == expected_class.end_period
 
         assert json['type'] == entity.type
         if isinstance(entity, GeneralCourse):
