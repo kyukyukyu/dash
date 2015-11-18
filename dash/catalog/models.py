@@ -54,13 +54,29 @@ class DepartmentCourse(db.Model):
     department = relationship('Department', backref=db.backref('department_courses', cascade='all, delete-orphan'))
     course = relationship('Course', backref='department_courses')
 
-    def __init__(self, obj):
-        if isinstance(obj, Department):
-            self.department = obj
-        elif isinstance(obj, Course):
-            self.course = obj
+    def __init__(self, obj=None, department=None, course=None):
+        """Initializer defined explicitly in order to make mock factory
+        work correctly.
+
+        :param obj: Parameter used in mock factory.
+        :param department: Department object used in relationship.
+        :param course: Course object used in relationship.
+        """
+
+        if obj is None:
+            if department is None or course is None:
+                raise ValueError('both department and course should be passed '
+                                 'if obj is None')
+            self.department = department
+            self.course = course
         else:
-            raise TypeError('obj should be either Course or Department type')
+            if isinstance(obj, Department):
+                self.department = obj
+            elif isinstance(obj, Course):
+                self.course = obj
+            else:
+                raise TypeError('obj should be either Course or Department '
+                                'type')
 
 
 class Department(CatalogEntity):
