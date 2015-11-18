@@ -81,7 +81,8 @@ class TestUser:
 class TestCatalog:
 
     def test_get_by_id(self):
-        campus = Campus(code='HYSEOUL', name='HYU Seoul')
+        campus = Campus(code='HYSEOUL', scraper='scrapers.hyseoul',
+                        name='HYU Seoul')
         campus.save()
 
         retrieved_campus = Campus.get_by_id(campus.id)
@@ -154,6 +155,7 @@ class TestCatalog:
         db.session.commit()
         assert bool(campus.name)
         assert bool(campus.code)
+        assert bool(campus.scraper)
         assert bool(campus.created_at)
 
         department = DepartmentFactory()

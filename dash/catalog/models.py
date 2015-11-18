@@ -39,6 +39,8 @@ class CatalogEntity(SurrogatePK, Model, CreatedAtMixin):
 
 class Campus(CatalogEntity):
     name = Column(db.String(80), unique=False, nullable=False)
+    #: Module path for scraper script.
+    scraper = Column(db.String(255), unique=True, nullable=False)
     __tablename__ = 'campuses'
 
     def __repr__(self):
