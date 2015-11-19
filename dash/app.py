@@ -28,8 +28,7 @@ def create_app(config_object=ProdConfig):
     register_errorhandlers(app)
     if not app.debug:
         import logging
-        from logging.handlers import StreamHandler
-        log_handler = StreamHandler()
+        log_handler = logging.StreamHandler()
         log_handler.setLevel(logging.ERROR)
         app.logger.addHandler(log_handler)
     return app
