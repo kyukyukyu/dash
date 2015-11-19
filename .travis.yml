@@ -9,6 +9,7 @@ python:
 env:
   global:
     - DASH_SECRET=123456
+    - DASH_SQLALCHEMY_DATABASE_URI=postgresql://localhost/dash
 
 # command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
 install: pip install -r requirements/dev.txt
