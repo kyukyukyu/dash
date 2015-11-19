@@ -44,6 +44,10 @@ class CampusFactory(BaseFactory):
     name = Sequence(lambda n: "campus{0}".format(n))
     code = FuzzyText(length=6)
 
+    @post_generation
+    def scraper(obj, create, extracted, **kwargs):
+        obj.scraper = "scrapers.{0}".format(obj.code)
+
     class Meta:
         model = Campus
 
