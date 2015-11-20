@@ -42,7 +42,7 @@ def update_catalog(campus_code):
     """Updates catalog of a campus using user-written scraper."""
     campus = Campus.query.filter_by(code=campus_code)
     scraper = importlib.import_module(campus.scraper)
-    scraper.update()
+    scraper.update(campus)
 
 manager.add_command('server', Server())
 manager.add_command('shell', Shell(make_context=_make_context))
