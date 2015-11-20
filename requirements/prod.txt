@@ -39,3 +39,6 @@ Flask-RESTful==0.3.1
 
 # Date Utilities
 python-dateutil==2.3
+
+# Requirements for scraper scripts written by service providers
+-r scraper.txt
