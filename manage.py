@@ -40,7 +40,7 @@ def test():
 @manager.option('-c', '--code', dest='campus_code')
 def update_catalog(campus_code):
     """Updates catalog of a campus using user-written scraper."""
-    campus = Campus.query.filter_by(code=campus_code)
+    campus = Campus.query.filter_by(code=campus_code)[0]
     scraper = importlib.import_module(campus.scraper)
     scraper.update(campus)
 
