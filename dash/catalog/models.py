@@ -44,7 +44,7 @@ class Campus(CatalogEntity):
     __tablename__ = 'campuses'
 
     def __repr__(self):
-        return '<Campus({name})>'.format(name=self.name)
+        return u'<Campus({name})>'.format(name=self.name)
 
 
 class DepartmentCourse(db.Model):
@@ -89,7 +89,7 @@ class Department(CatalogEntity):
     courses = association_proxy('department_courses', 'course')
 
     def __repr__(self):
-        return '<Department({name})>'.format(name=self.name)
+        return u'<Department({name})>'.format(name=self.name)
 
 
 class Subject(CatalogEntity):
@@ -97,7 +97,7 @@ class Subject(CatalogEntity):
     __tablename__ = 'subjects'
 
     def __repr__(self):
-        return '<Subject({name})>'.format(name=self.name)
+        return u'<Subject({name})>'.format(name=self.name)
 
 
 class Course(CatalogEntity):
@@ -148,7 +148,7 @@ class GenEduCategory(CatalogEntity):
     __tablename__ = 'gen_edu_categories'
 
     def __repr__(self):
-        return '<GenEduCategory({name})>'.format(name=self.name)
+        return u'<GenEduCategory({name})>'.format(name=self.name)
 
 
 class GeneralCourse(Course):
