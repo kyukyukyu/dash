@@ -8,6 +8,7 @@ from six.moves.urllib import parse
 from functools import reduce
 from dash.compat import UnicodeMixin
 from dash.catalog.models import GeneralCourse, MajorCourse
+from .factories import MajorCourseFactory
 
 
 class Url(UnicodeMixin):
@@ -161,10 +162,21 @@ class TestCatalogEntityApi(object):
             resp = testapp.get(url)
             cls.assert_response(resp)
 
-            result_objs = resp.json['objects']
-            assert len(result_objs) == resp.json['num_results'] == \
-                len(expected_objs)
-            map(cls.assert_entity, expected_objs, result_objs)
+            num_results = resp.json['num_results']
+            assert num_results == len(expected_objs)
+
+            p = 1
+            pos = 0
+            while pos < num_results:
+                url_paged = url.query(page=p)
+                resp = testapp.get(url_paged)
+                cls.assert_response(resp)
+
+                result_objs = resp.json['objects']
+                map(cls.assert_entity, expected_objs[pos:(pos + 20)],
+                    result_objs)
+                p += 1
+                pos += 20
 
 
 class TestCampusApi(TestCatalogEntityApi):
@@ -308,6 +320,15 @@ class TestCourseApi(TestCatalogEntityApi):
         self.entity_test_under_campuses(campuses, course, testapp)
 
     def test_get_courses(self, campuses, courses, testapp):
+        self.collection_test_under_campuses(campuses, courses, testapp)
+
+    def test_paging_get_courses(self, campuses, departments, db, testapp):
+        courses = []
+        n_deps = len(departments)
+        for i in range(100):
+            c = MajorCourseFactory(departments=[departments[i % n_deps]])
+            courses.append(c)
+        db.session.commit()
         self.collection_test_under_campuses(campuses, courses, testapp)
 
     @pytest.mark.parametrize("name,codes_from_name", [
