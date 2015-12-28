@@ -219,15 +219,6 @@ class GenEduCategoryList(GenEduCategoryMixin, Collection):
     pass
 
 
-def qp_course_campus_id(q, v):
-    """Query postprocessor for Course objects when campus_id is given.
-
-    :param q: Query to manipulate.
-    :param v: Value used for filtering.
-    """
-    return q.filter(models.Department.campus_id == v)
-
-
 class CourseMixin(ResourceWithQuery):
     model = db.with_polymorphic(models.Course,
                                 [models.GeneralCourse, models.MajorCourse])
@@ -245,12 +236,38 @@ class CourseMixin(ResourceWithQuery):
 
     @classmethod
     def query(cls, **kwargs):
+        # contains_eager() is used instead of joinedload() for filtering
+        # by fields of subject. subqueryload() is used to make
+        # pagination correct.
         return super(CourseMixin, cls).query(**kwargs) \
             .join(cls.model.subject) \
             .options(db.contains_eager(cls.model.subject)) \
-            .join(*models.Course.departments.attr) \
-            .options(db.contains_eager(cls.model.department_courses)
-                       .contains_eager(models.DepartmentCourse.department))
+            .options(db.subqueryload(cls.model.department_courses)
+                       .joinedload(models.DepartmentCourse.department))
+
+    @classmethod
+    def filter_related(cls, q, dept_id, campus_id):
+        """Applies filter for fields of associated entity on a query
+        object.
+
+        :param q: Query object.
+        :param dept_id: ID of associated department.
+        :param campus_id: ID of associated campus.
+
+        :returns: A new query object with filter(s) applied for
+                  associated entity.
+        """
+        q_assoc = db.session.query(models.DepartmentCourse.course_id)
+        if dept_id:
+            q_assoc = q_assoc.filter(
+                    models.DepartmentCourse.department_id == dept_id)
+        if campus_id:
+            q_assoc = q_assoc.join(models.DepartmentCourse.department) \
+                             .filter(models.Department.campus_id ==
+                                     campus_id)
+        q_assoc = q_assoc.distinct()
+        q = q.filter(cls.model.id.in_(q_assoc))
+        return q
 
     @classmethod
     def marshal(cls, data):
@@ -261,12 +278,16 @@ class CourseMixin(ResourceWithQuery):
         return marshal(data, fields)
 
 
-@when('campus_id', qp_course_campus_id)
 class Course(CourseMixin, Entity):
-    pass
+    @classmethod
+    def query(cls, **kwargs):
+        q = super(Course, cls).query(**kwargs)
+        campus_id = kwargs.get('campus_id')
+        if campus_id:
+            q = cls.filter_related(q, None, campus_id)
+        return q
 
 
-@when('campus_id', qp_course_campus_id)
 class CourseList(CourseMixin, Collection):
     parser = Collection.parser.copy()
     parser.add_argument('name', type=text_type)
@@ -283,7 +304,12 @@ class CourseList(CourseMixin, Collection):
         entity = cls.model
         args = cls.parser.parse_args()
 
-        attrs_for_eq = [('department_id', models.Department.id)]
+        dept_id = args.get('department_id')
+        campus_id = kwargs.get('campus_id')
+        if dept_id or campus_id:
+            q = cls.filter_related(q, dept_id, campus_id)
+
+        attrs_for_eq = []
         course_type = args.get('type')
         if course_type == 'general':
             q = q.filter(entity.type == models.GeneralCourse.TYPE)

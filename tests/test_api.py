@@ -331,6 +331,15 @@ class TestCourseApi(TestCatalogEntityApi):
         db.session.commit()
         self.collection_test_under_campuses(campuses, courses, testapp)
 
+    def test_get_courses_open_for_multiple_dept(self, campuses, departments,
+                                                db, testapp):
+        courses = []
+        for i in range(100 // len(departments)):
+            c = MajorCourseFactory(departments=departments)
+            courses.append(c)
+        db.session.commit()
+        self.collection_test_under_campuses(campuses, courses, testapp)
+
     @pytest.mark.parametrize("name,codes_from_name", [
         ("understanding",
          frozenset(["10037", "15254", "15002", "11543", "11970", "22294",
