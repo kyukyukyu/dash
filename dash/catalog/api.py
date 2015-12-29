@@ -101,13 +101,28 @@ def like_filter_criterion(column, keyword, case_sensitive=False):
 
 
 class Collection(ResourceWithQuery):
-    parser = reqparse.RequestParser()
-    parser.add_argument('page', type=int)
-    parser.add_argument('results_per_page', type=int)
-
+    """Base class for API endpoints that shows list of entities.
+    """
     @classmethod
     def query(cls, **kwargs):
         return super(Collection, cls).query(**kwargs).order_by(cls.model.id)
+
+    def get(self, **kwargs):
+        query = self.query(**kwargs)
+        items = query.all()
+        ret_objects = [self.marshal(item) for item in items]
+        return {
+            'objects': ret_objects,
+        }, 200
+
+
+class PaginatedCollection(Collection):
+    """Base class for API endpoints that shows list of entities with
+    pagination.
+    """
+    parser = reqparse.RequestParser()
+    parser.add_argument('page', type=int)
+    parser.add_argument('results_per_page', type=int)
 
     def get(self, **kwargs):
         args = self.parser.parse_args()
@@ -202,7 +217,7 @@ class Subject(SubjectMixin, Entity):
     pass
 
 
-class SubjectList(SubjectMixin, Collection):
+class SubjectList(SubjectMixin, PaginatedCollection):
     pass
 
 
@@ -288,8 +303,8 @@ class Course(CourseMixin, Entity):
         return q
 
 
-class CourseList(CourseMixin, Collection):
-    parser = Collection.parser.copy()
+class CourseList(CourseMixin, PaginatedCollection):
+    parser = PaginatedCollection.parser.copy()
     parser.add_argument('name', type=text_type)
     parser.add_argument('subject_code', type=text_type)
     parser.add_argument('instructor', type=text_type)

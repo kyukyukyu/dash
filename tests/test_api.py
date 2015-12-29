@@ -102,6 +102,8 @@ class Url(UnicodeMixin):
 
 
 class TestCatalogEntityApi(object):
+    # True if API endpoints for collection should paginate the result.
+    paginate_col = False
 
     @classmethod
     def assert_response(cls, resp):
@@ -162,21 +164,36 @@ class TestCatalogEntityApi(object):
             resp = testapp.get(url)
             cls.assert_response(resp)
 
-            num_results = resp.json['num_results']
-            assert num_results == len(expected_objs)
+            if cls.paginate_col:
+                # API endpoints for collection should paginate the
+                # result.
+                assert 'num_results' in resp.json
+                assert 'page' in resp.json
+                assert 'num_pages' in resp.json
+                num_results = resp.json['num_results']
+                assert num_results == len(expected_objs)
 
-            p = 1
-            pos = 0
-            while pos < num_results:
-                url_paged = url.query(page=p)
-                resp = testapp.get(url_paged)
-                cls.assert_response(resp)
+                p = 1
+                pos = 0
+                while pos < num_results:
+                    url_paged = url.query(page=p)
+                    resp = testapp.get(url_paged)
+                    cls.assert_response(resp)
 
+                    result_objs = resp.json['objects']
+                    map(cls.assert_entity, expected_objs[pos:(pos + 20)],
+                        result_objs)
+                    p += 1
+                    pos += 20
+            else:
+                # API endpoints for collection should not paginate the
+                # result.
+                assert 'num_results' not in resp.json
+                assert 'page' not in resp.json
+                assert 'num_pages' not in resp.json
                 result_objs = resp.json['objects']
-                map(cls.assert_entity, expected_objs[pos:(pos + 20)],
-                    result_objs)
-                p += 1
-                pos += 20
+                assert len(expected_objs) == len(result_objs)
+                map(cls.assert_entity, expected_objs, result_objs)
 
 
 class TestCampusApi(TestCatalogEntityApi):
@@ -203,10 +220,12 @@ class TestCampusApi(TestCatalogEntityApi):
 
         campuses = sorted(campuses, key=lambda c: c.id)
 
+        # API endpoints for collection should not paginate the result.
+        assert 'num_results' not in resp.json
+        assert 'page' not in resp.json
+        assert 'num_pages' not in resp.json
         objects = resp.json['objects']
-        assert len(objects) == \
-            resp.json['num_results'] == \
-            len(campuses)
+        assert len(objects) == len(campuses)
         map(self.assert_entity, campuses, objects)
 
 
@@ -230,6 +249,8 @@ class TestDepartmentApi(TestCatalogEntityApi):
 
 class TestSubjectApi(TestCatalogEntityApi):
     base_url = Url('subjects', prefix="/api")   # "/api/subjects"
+    # API endpoints for collection should be paginated.
+    paginate_col = True
 
     @classmethod
     def assert_entity(cls, entity, json):
@@ -277,15 +298,20 @@ class TestGenEduCategoryApi(TestCatalogEntityApi):
 
         gen_edu_categories = sorted(gen_edu_categories, key=lambda c: c.id)
 
+        # API endpoints for collection should not paginate the result.
+        assert 'num_results' not in resp.json
+        assert 'page' not in resp.json
+        assert 'num_pages' not in resp.json
         objects = resp.json['objects']
-        assert len(objects) == resp.json['num_results'] == \
-               len(gen_edu_categories)
+        assert len(objects) == len(gen_edu_categories)
         map(self.assert_entity, gen_edu_categories, objects)
 
 
 class TestCourseApi(TestCatalogEntityApi):
 
     base_url = Url('courses', prefix="/api")   # "/api/courses"
+    # API endpoints for collection should be paginated.
+    paginate_col = True
 
     @classmethod
     def assert_entity(cls, entity, json):
