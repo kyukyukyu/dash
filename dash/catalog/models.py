@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.hybrid import hybrid_property
+import sqlalchemy.event
 from dash.database import (
     Column,
     db,
@@ -102,7 +103,10 @@ class Subject(CatalogEntity):
 
 class Course(CatalogEntity):
     __tablename__ = 'courses'
-    type = Column(db.String(40), nullable=False)
+    __table_args__ = (
+        db.CheckConstraint('target_grade IS NULL OR target_grade >= 0',
+                           name='ck_courses_target_grade'),
+    )
     instructor = Column(db.String(80), nullable=True)
     credit = Column(db.Float,
                     db.CheckConstraint('credit >= 0.0',
@@ -117,6 +121,15 @@ class Course(CatalogEntity):
                            innerjoin=True,
                            )
     departments = association_proxy('department_courses', 'department')
+    gen_edu_category_id = ReferenceCol('gen_edu_categories', nullable=True)
+    gen_edu_category = relationship('GenEduCategory',
+                                    backref=db.backref('courses',
+                                                       lazy='dynamic'),
+                                    lazy='joined',
+                                    )
+    target_grade = Column(db.Integer, nullable=True)
+    #: True if a course might be said to be major.
+    major = Column(db.Boolean, nullable=False)
 
     @hybrid_property
     def name(self):
@@ -134,13 +147,29 @@ class Course(CatalogEntity):
     def subject_code(self):
         return Subject.code
 
-    __mapper_args__ = {
-        'polymorphic_on': type,
-        'with_polymorphic': '*',
-    }
+    @hybrid_property
+    def general(self):
+        """True if a course is associated with a general education
+        category.
+        """
+        return self.gen_edu_category_id is not None
+
+    @general.expression
+    def general(self):
+        return self.gen_edu_category_id.isnot(None)
 
     def __repr__(self):
         return '<Course({code})>'.format(code=self.code)
+
+
+@sqlalchemy.event.listens_for(Course, 'before_insert')
+@sqlalchemy.event.listens_for(Course, 'before_update')
+def check_course(mapper, connection, course):
+    """Checks the constraint about course type.
+    """
+    assert course.major is True or course.gen_edu_category_id is not None, \
+        ('a course should be major or associated with a general '
+         'education category')
 
 
 class GenEduCategory(CatalogEntity):
@@ -149,43 +178,6 @@ class GenEduCategory(CatalogEntity):
 
     def __repr__(self):
         return u'<GenEduCategory({name})>'.format(name=self.name)
-
-
-class GeneralCourse(Course):
-    __tablename__ = 'general_courses'
-    id = ReferenceCol('courses', primary_key=True)
-    category_id = ReferenceCol('gen_edu_categories')
-    category = relationship('GenEduCategory',
-                            backref=db.backref('courses', lazy='dynamic'),
-                            lazy='joined',
-                            )
-
-    TYPE = 'general'
-    __mapper_args__ = {
-        'polymorphic_identity': TYPE,
-    }
-
-    def __repr__(self):
-        return '<GeneralCourse({code})>'.format(code=self.code)
-
-
-class MajorCourse(Course):
-    __tablename__ = 'major_courses'
-    __table_args__ = (
-        db.CheckConstraint('target_grade IS NULL OR target_grade >= 0',
-                           name='ck_general_courses_target_grade',
-                           ),
-    )
-    id = ReferenceCol('courses', primary_key=True)
-    target_grade = Column(db.Integer, nullable=True)
-
-    TYPE = 'major'
-    __mapper_args__ = {
-        'polymorphic_identity': TYPE,
-    }
-
-    def __repr__(self):
-        return '<MajorCourse({code})>'.format(code=self.code)
 
 
 class CourseClass(SurrogatePK, Model, CreatedAtMixin):

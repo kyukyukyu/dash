@@ -7,8 +7,7 @@ from six import text_type as unicode
 from six.moves.urllib import parse
 from functools import reduce
 from dash.compat import UnicodeMixin
-from dash.catalog.models import GeneralCourse, MajorCourse
-from .factories import MajorCourseFactory
+from .factories import CourseFactory
 
 
 class Url(UnicodeMixin):
@@ -328,13 +327,16 @@ class TestCourseApi(TestCatalogEntityApi):
             assert result_class['start_period'] == expected_class.start_period
             assert result_class['end_period'] == expected_class.end_period
 
-        assert json['type'] == entity.type
-        if isinstance(entity, GeneralCourse):
-            assert json['category_id'] == entity.category_id
-            TestGenEduCategoryApi.assert_entity(entity.category,
+        expected_type = 'general' if entity.general else 'major'
+        assert json['type'] == expected_type
+        assert json['gen_edu_category_id'] == entity.gen_edu_category_id
+        assert json['category_id'] == entity.gen_edu_category_id
+        if entity.gen_edu_category is not None:
+            TestGenEduCategoryApi.assert_entity(entity.gen_edu_category,
+                                                json['gen_edu_category'])
+            TestGenEduCategoryApi.assert_entity(entity.gen_edu_category,
                                                 json['category'])
-        elif isinstance(entity, MajorCourse):
-            assert json['target_grade'] == entity.target_grade
+        assert json['target_grade'] == entity.target_grade
 
     @staticmethod
     def entity_test_under_campus(entity, campus):
@@ -352,7 +354,7 @@ class TestCourseApi(TestCatalogEntityApi):
         courses = []
         n_deps = len(departments)
         for i in range(100):
-            c = MajorCourseFactory(departments=[departments[i % n_deps]])
+            c = CourseFactory(departments=[departments[i % n_deps]])
             courses.append(c)
         db.session.commit()
         self.collection_test_under_campuses(campuses, courses, testapp)
@@ -361,7 +363,7 @@ class TestCourseApi(TestCatalogEntityApi):
                                                 db, testapp):
         courses = []
         for i in range(100 // len(departments)):
-            c = MajorCourseFactory(departments=departments)
+            c = CourseFactory(departments=departments)
             courses.append(c)
         db.session.commit()
         self.collection_test_under_campuses(campuses, courses, testapp)
@@ -384,14 +386,15 @@ class TestCourseApi(TestCatalogEntityApi):
                              "department_id,codes_from_options", [
         ("general", 1, None, None, frozenset(["15254"])),
         ("general", None, None, None, frozenset(["15254", "15002", "20025",
-                                                 "20016"])),
+                                                 "20016", "15007"])),
         ("major", None, 3, 1, frozenset(["10037"])),
         ("major", None, 3, None, frozenset(["10037", "11552", "11543",
                                             "22294", "22291"])),
         ("major", None, None, 1, frozenset(["10037", "11615"])),
         ("major", None, None, None, frozenset(["10037", "11615", "11552",
                                                "11543", "12798", "11970",
-                                               "22294", "22361", "22291"])),
+                                               "22294", "22361", "22291",
+                                               "15007"])),
         (None, None, None, None, None),
     ])
     def test_search_courses(

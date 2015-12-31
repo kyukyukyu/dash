@@ -11,8 +11,6 @@ from dash.catalog.models import (
     Subject,
     Course,
     GenEduCategory,
-    GeneralCourse,
-    MajorCourse,
     CourseClass,
 )
 from .factories import (
@@ -22,7 +20,7 @@ from .factories import (
     SubjectFactory,
     GenEduCategoryFactory,
     GeneralCourseFactory,
-    MajorCourseFactory,
+    CourseFactory,
     CourseClassFactory,
 )
 
@@ -110,23 +108,23 @@ class TestCatalog:
         retrieved_category = GenEduCategory.get_by_id(gen_edu_category.id)
         assert retrieved_category == gen_edu_category
 
-        course = GeneralCourse(code='10020', subject=subject, credit=3.0,
-                               departments=[department])
-        course.category = gen_edu_category
+        course = Course(code='10020', subject=subject, credit=3.0,
+                        departments=[department], major=False)
+        course.gen_edu_category = gen_edu_category
         course.save()
 
         retrieved_course = Course.get_by_id(course.id)
-        assert isinstance(retrieved_course, GeneralCourse)
         assert retrieved_course == course
+        assert retrieved_course.general is True
 
-        course2 = MajorCourse(code='10020', subject=subject,
-                              departments=[department], credit=3.0,
-                              target_grade=3)
+        course2 = Course(code='10020', subject=subject,
+                         departments=[department], credit=3.0,
+                         target_grade=3, major=True)
         course2.save()
 
         retrieved_course = Course.get_by_id(course2.id)
-        assert isinstance(retrieved_course, MajorCourse)
         assert retrieved_course == course2
+        assert retrieved_course.general is False
 
         course_class = CourseClass(day_of_week=2, start_period=14,
                                    end_period=17, course=course)
@@ -197,14 +195,26 @@ class TestCatalog:
         general_course = GeneralCourseFactory()
         db.session.commit()
         assert_course(general_course)
-        assert bool(general_course.category)
-        assert general_course in general_course.category.courses
-        assert bool(general_course.category_id)
+        assert bool(general_course.gen_edu_category)
+        assert general_course in general_course.gen_edu_category.courses
+        assert bool(general_course.gen_edu_category_id)
+        assert general_course.target_grade is None
+        assert general_course.major is False
+        assert general_course.general is True
 
-        major_course = MajorCourseFactory()
+        major_course = CourseFactory()
         db.session.commit()
         assert_course(major_course)
-        assert bool(major_course.target_grade)
+        assert 1 <= major_course.target_grade <= 5
+        assert major_course.major is True
+        assert major_course.general is False
+
+        # If a course is not major, then it should be associated with a
+        # general education category.
+        with pytest.raises(AssertionError):
+            invalid_course = CourseFactory(major=False)
+            db.session.commit()
+        db.session.rollback()
 
         course_class = CourseClassFactory()
         db.session.commit()

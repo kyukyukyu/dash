@@ -2,6 +2,7 @@
 from functools import wraps
 from collections import Mapping
 from six import iteritems, text_type
+import sqlalchemy.sql.expression
 from sqlalchemy.orm.exc import NoResultFound
 from flask import Blueprint, render_template, abort
 from flask.ext.login import login_required
@@ -54,18 +55,36 @@ course_class_fields = {
     'end_period': fields.Integer,
 }
 
+gen_edu_category_fields = extend(entity_fields, {
+    'name': fields.String,
+})
+
+
+class CourseType(fields.Raw):
+    """Custom field for course type. This class should be used for
+    `general` property of :class:`dash.catalog.models.Course` objects.
+    """
+    def format(self, value):
+        return 'general' if value is True else 'major'
+
+
 course_fields = extend(entity_fields, {
-    'type': fields.String,
+    'type': CourseType(attribute='general'),
     'instructor': fields.String,
     'credit': fields.Float,
     'subject_id': fields.Integer,
     'subject': fields.Nested(subject_fields),
+    'gen_edu_category_id': fields.Integer(default=None),
+    'gen_edu_category': fields.Nested(gen_edu_category_fields,
+                                      allow_null=True),
+    'category_id': fields.Integer(attribute='gen_edu_category_id',
+                                  default=None),
+    'category': fields.Nested(gen_edu_category_fields,
+                              attribute='gen_edu_category',
+                              allow_null=True),
+    'target_grade': fields.Integer(default=None),
     'departments': fields.List(fields.Nested(department_fields)),
     'classes': fields.List(fields.Nested(course_class_fields)),
-})
-
-gen_edu_category_fields = extend(entity_fields, {
-    'name': fields.String,
 })
 
 
@@ -235,19 +254,8 @@ class GenEduCategoryList(GenEduCategoryMixin, Collection):
 
 
 class CourseMixin(ResourceWithQuery):
-    model = db.with_polymorphic(models.Course,
-                                [models.GeneralCourse, models.MajorCourse])
-    general_fields = extend(course_fields, {
-        'category_id': fields.Integer,
-        'category': fields.Nested(gen_edu_category_fields),
-    })
-    major_fields = extend(course_fields, {
-        'target_grade': fields.Integer,
-    })
-    fields_by_model = {
-        models.GeneralCourse: general_fields,
-        models.MajorCourse: major_fields,
-    }
+    model = models.Course
+    fields = course_fields
 
     @classmethod
     def query(cls, **kwargs):
@@ -284,14 +292,6 @@ class CourseMixin(ResourceWithQuery):
         q = q.filter(cls.model.id.in_(q_assoc))
         return q
 
-    @classmethod
-    def marshal(cls, data):
-        try:
-            fields = cls.fields_by_model[type(data)]
-        except KeyError:
-            raise TypeError('type of data is invalid')
-        return marshal(data, fields)
-
 
 class Course(CourseMixin, Entity):
     @classmethod
@@ -327,14 +327,14 @@ class CourseList(CourseMixin, PaginatedCollection):
         attrs_for_eq = []
         course_type = args.get('type')
         if course_type == 'general':
-            q = q.filter(entity.type == models.GeneralCourse.TYPE)
+            q = q.filter(entity.general == sqlalchemy.sql.expression.true())
             attrs_for_eq.append(
-                ('category_id', entity.GeneralCourse.category_id)
+                ('category_id', entity.gen_edu_category_id)
             )
         elif course_type == 'major':
-            q = q.filter(entity.type == models.MajorCourse.TYPE)
+            q = q.filter(entity.major == sqlalchemy.sql.expression.true())
             attrs_for_eq.extend([
-                ('target_grade', entity.MajorCourse.target_grade),
+                ('target_grade', entity.target_grade),
             ])
 
         for argname in ('name', 'subject_code', 'instructor'):

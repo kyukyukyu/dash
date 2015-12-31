@@ -8,8 +8,7 @@ from dash.catalog.models import (
     Department,
     Subject,
     GenEduCategory,
-    GeneralCourse,
-    MajorCourse,
+    Course,
 )
 from dash.catalog.scraper import update_catalog
 from .factories import (
@@ -17,8 +16,8 @@ from .factories import (
     DepartmentFactory,
     SubjectFactory,
     GenEduCategoryFactory,
+    CourseFactory,
     GeneralCourseFactory,
-    MajorCourseFactory,
 )
 
 
@@ -55,24 +54,25 @@ class TestScraper(object):
             catalog.hold_gen_edu_categories(gen_edu_categories)
 
             major_courses.append(
-                MajorCourseFactory.build(subject=subjects[0],
-                                         departments=[departments[0]]))
+                CourseFactory.build(subject=subjects[0],
+                                    departments=[departments[0]]))
             major_courses.append(
-                MajorCourseFactory.build(subject=subjects[0],
-                                         departments=[departments[0],
+                CourseFactory.build(subject=subjects[0],
+                                    departments=[departments[0],
                                                       departments[2]]))
             major_courses.append(
-                MajorCourseFactory.build(subject=subjects[1],
-                                         departments=[departments[0]]))
+                CourseFactory.build(subject=subjects[1],
+                                    departments=[departments[0]]))
             major_courses.append(
-                MajorCourseFactory.build(subject=subjects[1],
-                                         departments=[departments[1]]))
+                CourseFactory.build(subject=subjects[1],
+                                    departments=[departments[1]]))
             catalog.hold_courses(major_courses)
 
             general_courses.append(
-                GeneralCourseFactory.build(subject=subjects[2],
-                                           category=gen_edu_categories[0],
-                                           departments=[departments[3]]))
+                GeneralCourseFactory.build(
+                        subject=subjects[2],
+                        gen_edu_category=gen_edu_categories[0],
+                        departments=[departments[3]]))
 
             catalog.hold_courses(general_courses)
 
@@ -83,8 +83,7 @@ class TestScraper(object):
         for Model, mock_objs in ((Department, departments),
                                  (Subject, subjects),
                                  (GenEduCategory, gen_edu_categories),
-                                 (MajorCourse, major_courses),
-                                 (GeneralCourse, general_courses)):
+                                 (Course, major_courses + general_courses)):
             mock_objs_sorted = sorted(mock_objs,
                                       key=operator.attrgetter('code'))
             stored_objs = Model.query.order_by(Model.code).all()
