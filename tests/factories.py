@@ -110,7 +110,7 @@ class CourseFactory(BaseFactory):
             _departments[:] = extracted
 
         for d in _departments:
-            d.courses.append(obj)
+            d.courses.add(obj)
 
         return _departments
 

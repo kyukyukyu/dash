@@ -83,7 +83,8 @@ course_fields = extend(entity_fields, {
                               attribute='gen_edu_category',
                               allow_null=True),
     'target_grade': fields.Integer(default=None),
-    'departments': fields.List(fields.Nested(department_fields)),
+    'departments': fields.List(fields.Nested(department_fields),
+                               attribute=lambda c: [d for d in c.departments]),
     'classes': fields.List(fields.Nested(course_class_fields)),
 })
 
