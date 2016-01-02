@@ -54,8 +54,12 @@ class DepartmentCourse(db.Model):
     __tablename__ = 'department_course'
     department_id = Column(db.Integer, db.ForeignKey('departments.id'), primary_key=True)
     course_id = Column(db.Integer, db.ForeignKey('courses.id'), primary_key=True)
-    department = relationship('Department', backref=db.backref('department_courses', cascade='all, delete-orphan'))
-    course = relationship('Course', backref='department_courses')
+    department = relationship('Department',
+                              backref=db.backref('department_courses',
+                                                 cascade='all, delete-orphan'),
+                              collection_class=set)
+    course = relationship('Course', backref='department_courses',
+                          collection_class=set)
 
     def __init__(self, obj=None, department=None, course=None):
         """Initializer defined explicitly in order to make mock factory
